@@ -43,7 +43,7 @@ extern "C"
 #endif
     int sample_run_joint_init(char *model_file, void **handle, int *algo_width, int *algo_height);
     // bbox 将映射到 src_width/src_height 上，以便 osd 绘制
-    int sample_run_joint_inference(void *handle, const void *pstFrame, sample_run_joint_results *pResults, int src_width, int src_height);
+    int sample_run_joint_inference(void *handle, const void *pstFrame, int src_width, int src_height, sample_run_joint_results *pResults);
     int sample_run_joint_release(void *handle);
 #ifdef __cplusplus
 }

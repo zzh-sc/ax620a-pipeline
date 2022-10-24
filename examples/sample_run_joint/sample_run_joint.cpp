@@ -287,7 +287,7 @@ int sample_run_joint_release(void *yhandle)
     return 0;
 }
 
-int sample_run_joint_inference(void *yhandle, const void *_pstFrame, sample_run_joint_results *pResults, int src_width, int src_height)
+int sample_run_joint_inference(void *yhandle, const void *_pstFrame,  int src_width, int src_height, sample_run_joint_results *pResults)
 {
     handle_t *handle = (handle_t *)yhandle;
 

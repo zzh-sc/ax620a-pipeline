@@ -3,3 +3,8 @@
 
 ## 流程图
 ![](../../docs/sample_vin_ivps_joint_venc_rtsp_vo.png)
+
+## 快速体验
+```
+# ./sample_vin_ivps_joint_venc_rtsp_vo -c 0 -m yolov5s_sub_nv12_11.joint
+```

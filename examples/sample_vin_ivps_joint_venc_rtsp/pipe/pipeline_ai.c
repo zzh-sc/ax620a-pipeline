@@ -67,7 +67,7 @@ AX_VOID *GetFrameThread(AX_VOID *pArg)
         if (gJointHandle)
         {
             static sample_run_joint_results pResult;
-            ret = sample_run_joint_inference(gJointHandle, &tSrcFrame, &pResult, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT);
+            ret = sample_run_joint_inference(gJointHandle, &tSrcFrame, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT, &pResult);
 
             pthread_mutex_lock(&g_result_mutex);
 

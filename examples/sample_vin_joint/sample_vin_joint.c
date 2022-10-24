@@ -41,6 +41,7 @@
 #include "ax_interpreter_external_api.h"
 
 #include "../sample_run_joint/sample_run_joint.h"
+#include "../utilities/sample_log.h"
 
 typedef enum
 {
@@ -197,7 +198,7 @@ void *IspRun(void *args)
 {
     AX_U32 i = (AX_U32)args;
 
-    COMM_ISP_PRT("cam %d is running...\n", i);
+    ALOGN("cam %d is running...\n", i);
 
     while (!g_isp_force_loop_exit)
     {
@@ -220,7 +221,7 @@ static void *getYuv(void *arg)
     {
         if (gLoopExit == 1)
         {
-            COMM_ISP_PRT("getYuv exit\n");
+            ALOGN("getYuv exit\n");
             break;
         }
         /* you can open here for get frame debug */
@@ -228,13 +229,13 @@ static void *getYuv(void *arg)
         retval = AX_VIN_GetYuvFrame(gCams[i].nPipeId, AX_YUV_SOURCE_ID_MAIN, &img_info, timeOutMs);
         if (retval != 0)
         {
-            COMM_ISP_PRT("return error! gCams[i].nPipeId = %d, retval = 0x%x\n", gCams[i].nPipeId, retval);
+            ALOGE("return error! gCams[i].nPipeId = %d, retval = 0x%x\n", gCams[i].nPipeId, retval);
             usleep(1000 * 1000);
             continue;
         }
         usleep(20 * 1000);
 
-        COMM_ISP_PRT(" gCams[i].nPipeId = %d, w/h %d %d, enImgFormat %d, u64SeqNum = %lld, u64PTS = %lld, u32FrameSize: %d, Phy=%llu Vir=%llu\n",
+        ALOGN(" gCams[i].nPipeId = %d, w/h %d %d, enImgFormat %d, u64SeqNum = %lld, u64PTS = %lld, u32FrameSize: %d, Phy=%llu Vir=%llu\n",
                      gCams[i].nPipeId,
                      img_info.tFrameInfo.stVFrame.u32Width, img_info.tFrameInfo.stVFrame.u32Height,
                      img_info.tFrameInfo.stVFrame.enImgFormat,
@@ -258,7 +259,7 @@ static void *getYuv(void *arg)
         if (gJointHandle)
         {
             static sample_run_joint_results pResult;
-            retval = sample_run_joint_inference(gJointHandle, &tSrcFrame, &pResult, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT);
+            retval = sample_run_joint_inference(gJointHandle, &tSrcFrame, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT, &pResult);
 
             if (0 == retval)
             {
@@ -274,7 +275,7 @@ static void *getYuv(void *arg)
         usleep(200 * 1000);
     }
 
-    COMM_ISP_PRT("getYuv thread gCams[i].nPipeId=%d exit!\n", gCams[i].nPipeId);
+    ALOGN("getYuv thread gCams[i].nPipeId=%d exit!\n", gCams[i].nPipeId);
     return 0;
 }
 
@@ -308,12 +309,12 @@ AX_S32 SysRun()
             axRet = pthread_join(gCams[i].tIspProcThread, NULL);
             if (axRet < 0)
             {
-                COMM_ISP_PRT(" isp run thread exit failed, ret=0x%x.\n", axRet);
+                ALOGE(" isp run thread exit failed, ret=0x%x.\n", axRet);
             }
             axRet = pthread_join(tgetYuvThread, NULL);
             if (axRet < 0)
             {
-                COMM_ISP_PRT(" getyuv thread exit failed, ret=0x%x.\n", axRet);
+                ALOGE(" getyuv thread exit failed, ret=0x%x.\n", axRet);
             }
         }
     }
@@ -323,29 +324,29 @@ AX_S32 SysRun()
 
 AX_VOID PrintHelp()
 {
-    COMM_ISP_PRT("command:\n");
-    COMM_ISP_PRT("\t-m: Joint model path\n");
-    COMM_ISP_PRT("\t-c: ISP Test Case:\n");
-    COMM_ISP_PRT("\t\t0: Single OS04A10\n");
-    COMM_ISP_PRT("\t\t1: Single IMX334\n");
-    COMM_ISP_PRT("\t\t2: Single GC4653\n");
-    COMM_ISP_PRT("\t\t3: DUAL OS04A10\n");
-    COMM_ISP_PRT("\t\t4: Single OS08A20\n");
-    COMM_ISP_PRT("\t\t5: Single OS04A10 Online\n");
-    COMM_ISP_PRT("\t\t6: Single DVP\n");
-    COMM_ISP_PRT("\t\t7: Single BT601\n");
-    COMM_ISP_PRT("\t\t8: Single BT656\n");
-    COMM_ISP_PRT("\t\t9: Single BT1120\n");
-    COMM_ISP_PRT("\t\t10: MIPI YUV\n");
+    printf("command:\n");
+    printf("\t-m: Joint model path\n");
+    printf("\t-c: ISP Test Case:\n");
+    printf("\t\t0: Single OS04A10\n");
+    printf("\t\t1: Single IMX334\n");
+    printf("\t\t2: Single GC4653\n");
+    printf("\t\t3: DUAL OS04A10\n");
+    printf("\t\t4: Single OS08A20\n");
+    printf("\t\t5: Single OS04A10 Online\n");
+    printf("\t\t6: Single DVP\n");
+    printf("\t\t7: Single BT601\n");
+    printf("\t\t8: Single BT656\n");
+    printf("\t\t9: Single BT1120\n");
+    printf("\t\t10: MIPI YUV\n");
 
-    COMM_ISP_PRT("\t-e: SDR/HDR Mode:\n");
-    COMM_ISP_PRT("\t\t1: SDR\n");
-    COMM_ISP_PRT("\t\t2: HDR 2DOL\n");
+    printf("\t-e: SDR/HDR Mode:\n");
+    printf("\t\t1: SDR\n");
+    printf("\t\t2: HDR 2DOL\n");
 }
 
 static AX_VOID __sigint(int iSigNo)
 {
-    COMM_ISP_PRT("Catch signal %d\n", iSigNo);
+    // ALOGN("Catch signal %d\n", iSigNo);
     gLoopExit = 1;
 
     return;
@@ -353,8 +354,6 @@ static AX_VOID __sigint(int iSigNo)
 
 int main(int argc, char *argv[])
 {
-    COMM_ISP_PRT("ISP Sample. Build at %s %s\n", __DATE__, __TIME__);
-
     int c;
     int isExit = 0, i;
     COMMON_SYS_CASE_E eSysCase = SYS_CASE_NONE;
@@ -404,7 +403,7 @@ int main(int argc, char *argv[])
 
     if (eSysCase >= SYS_CASE_BUTT || eSysCase <= SYS_CASE_NONE)
     {
-        COMM_ISP_PRT("error case type\n");
+        ALOGE("error case type\n");
         exit(0);
     }
 
@@ -587,24 +586,24 @@ int main(int argc, char *argv[])
     axRet = AX_NPU_SDK_EX_Init_with_attr(&sNpuAttr);
     if (0 != axRet)
     {
-        COMM_ISP_PRT("AX_NPU_SDK_EX_Init_with_attr failed, ret=0x%x.\n", axRet);
+        ALOGE("AX_NPU_SDK_EX_Init_with_attr failed, ret=0x%x.\n", axRet);
         return -1;
     }
 
     axRet = COMMON_SYS_Init(&tCommonArgs);
     if (axRet)
     {
-        COMM_ISP_PRT("isp sys init fail\n");
+        ALOGE("isp sys init fail\n");
         goto EXIT;
     }
 
     axRet = sample_run_joint_init(model_path, &gJointHandle, &SAMPLE_ALGO_WIDTH, &SAMPLE_ALGO_HEIGHT);
     if (0 != axRet)
     {
-        COMM_ISP_PRT("sample_run_joint_init failed,s32Ret:0x%x\n", axRet);
+        ALOGE("sample_run_joint_init failed,s32Ret:0x%x\n", axRet);
         goto EXIT;
     }
-    COMM_ISP_PRT("load model %s success!\n", model_path);
+    ALOGN("load model %s success!\n", model_path);
 
     COMMON_CAM_Init();
 
@@ -621,23 +620,23 @@ int main(int argc, char *argv[])
         if (axRet)
             goto EXIT;
         gCams[i].bOpen = AX_TRUE;
-        COMM_ISP_PRT("camera %d is open\n", i);
+        ALOGN("camera %d is open\n", i);
     }
 
 #ifdef TUNING_CTRL
     /* Net Preview */
-    COMM_ISP_PRT("Start the service on the tuning device side.\n");
+    ALOGN("Start the service on the tuning device side.\n");
 
     axRet = AX_NT_StreamInit(6000);
     if (0 != axRet)
     {
-        COMM_ISP_PRT("AX_NT_StreamInit failed, ret=0x%x.\n", axRet);
+        ALOGE("AX_NT_StreamInit failed, ret=0x%x.\n", axRet);
         return -1;
     }
     axRet = AX_NT_CtrlInit(8082);
     if (0 != axRet)
     {
-        COMM_ISP_PRT("AX_NT_CtrlInit failed, ret=0x%x.\n", axRet);
+        ALOGE("AX_NT_CtrlInit failed, ret=0x%x.\n", axRet);
         return -1;
     }
 
@@ -645,7 +644,7 @@ int main(int argc, char *argv[])
     {
         AX_NT_SetStreamSource(gCams[i].nPipeId);
     }
-    COMM_ISP_PRT("tuning runing.\n");
+    ALOGN("tuning runing.\n");
 #endif
 
     SysRun();
