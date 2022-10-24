@@ -15,6 +15,8 @@
 - [sample_vin_ivps_joint_venc_rtsp](examples/sample_vin_ivps_joint_venc_rtsp/README.md)
 - [sample_vin_ivps_joint_venc_rtsp_vo](examples/sample_vin_ivps_joint_venc_rtsp_vo/README.md)
 
+### DEMO视频（点击图片播放）
+[![](docs/demo.jpg)](https://www.bilibili.com/video/BV16e4y1e7rG)
 
 ## 技术讨论
 - Github issues
