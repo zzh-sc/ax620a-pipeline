@@ -41,8 +41,20 @@ typedef struct _sample_run_joint_results
 extern "C"
 {
 #endif
+    /// @brief 创建算法handle，并输出算法的输入分辨率，以供其他模块设置
+    /// @param model_file joint算法模型路径
+    /// @param handle 输出的算法handle
+    /// @param algo_width 算法的输入宽
+    /// @param algo_height 算法的输入高
+    /// @return 
     int sample_run_joint_init(char *model_file, void **handle, int *algo_width, int *algo_height);
-    // bbox 将映射到 src_width/src_height 上，以便 osd 绘制
+    /// @brief 推理输入的图像，检测出bbox，并将映射到 src_width/src_height 上，以便 osd 绘制
+    /// @param handle 算法handle
+    /// @param pstFrame AX_NPU_CV_Image结构体指针
+    /// @param src_width 需要映射的目标分辨率的宽
+    /// @param src_height 需要映射的目标分辨率的高
+    /// @param pResults 推理结果
+    /// @return 
     int sample_run_joint_inference(void *handle, const void *pstFrame, int src_width, int src_height, sample_run_joint_results *pResults);
     int sample_run_joint_release(void *handle);
 #ifdef __cplusplus
