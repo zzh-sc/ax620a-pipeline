@@ -15,9 +15,8 @@
 - [sample_vin_ivps_joint_venc_rtsp](examples/sample_vin_ivps_joint_venc_rtsp)
 - [sample_vin_ivps_joint_venc_rtsp_vo](examples/sample_vin_ivps_joint_venc_rtsp_vo)
 
-### DEMO视频（点击图片播放）
-
-<a href="https://www.bilibili.com/video/BV16e4y1e7rG"><img src="docs/demo.jpg" height="320"></a>
+### DEMO视频
+https://user-images.githubusercontent.com/46700201/198552009-b55a5776-fc5a-4725-9906-d37548385359.mp4
 
 ## 技术讨论
 - Github issues
