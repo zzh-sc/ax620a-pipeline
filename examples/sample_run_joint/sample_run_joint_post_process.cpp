@@ -28,6 +28,7 @@
 
 #define PROB_THRESHOLD 0.4f
 #define NMS_THRESHOLD 0.45f
+#define YOLOV5_CLASS_NUM 80
 
 const float ANCHORS[18] = {10, 13, 16, 30, 33, 23, 30, 61, 62, 45, 59, 119, 116, 90, 156, 198, 373, 326};
 
@@ -57,7 +58,7 @@ void sample_run_joint_post_process(AX_U32 nOutputSize, AX_JOINT_IOMETA_T *pOutpu
         auto ptr = (float *)info.pVirAddr;
 
         int32_t stride = (1 << i) * 8;
-        generate_proposals_yolov5(stride, ptr, PROB_THRESHOLD, proposals, SAMPLE_ALGO_WIDTH, SAMPLE_ALGO_HEIGHT, ANCHORS, prob_threshold_unsigmoid, 80);
+        generate_proposals_yolov5(stride, ptr, PROB_THRESHOLD, proposals, SAMPLE_ALGO_WIDTH, SAMPLE_ALGO_HEIGHT, ANCHORS, prob_threshold_unsigmoid, YOLOV5_CLASS_NUM);
     }
 
     detection::get_out_bbox(proposals, objects, NMS_THRESHOLD, SAMPLE_ALGO_HEIGHT, SAMPLE_ALGO_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT, SAMPLE_MAJOR_STREAM_WIDTH);

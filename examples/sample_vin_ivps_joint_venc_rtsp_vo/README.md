@@ -6,5 +6,6 @@
 
 ## 快速体验
 ```
-# ./sample_vin_ivps_joint_venc_rtsp_vo -c 0 -m yolov5s_sub_nv12_11.joint
+# wget https://github.com/AXERA-TECH/ax-models/blob/main/ax620/yolov5s_sub_nv12_11.joint
+# ./sample_vin_ivps_joint_venc_rtsp_vo -m ./yolov5s_sub_nv12_11.joint -c 0
 ```
