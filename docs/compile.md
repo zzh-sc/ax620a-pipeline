@@ -18,7 +18,7 @@ ax-pipeline 的源码编译目前有两种实现路径：
 ### 3rdparty 准备
 
 - 下载预编译好的 OpenCV 库文件 [[AX620A/U 匹配](https://github.com/AXERA-TECH/ax-samples/releases/download/v0.1/opencv-arm-linux-gnueabihf-gcc-7.5.0.zip)]；
-- 在 ax-samples 创建 3rdparty 文件，并将下载好的 OpenCV 库文件压缩包解压到该文件夹中。
+- 在 ax-pipeline 创建 3rdparty 文件，并将下载好的 OpenCV 库文件压缩包解压到该文件夹中。
 
 ### 安装交叉编译工具链
 
@@ -28,18 +28,23 @@ ax-pipeline 的源码编译目前有两种实现路径：
 
 ### 编译过程
 
-git clone 下载源码，进入 ax-samples 根目录，创建 cmake 编译任务：
+git clone 下载源码，进入 ax-pipeline 根目录，创建 cmake 编译任务：
 
 ```bash
 $ git clone --recursive https://github.com/AXERA-TECH/ax-pipeline.git
 $ cd ax-pipeline
+$ mkdir 3rdparty
+$ cd 3rdparty
+$ wget https://github.com/AXERA-TECH/ax-samples/releases/download/v0.1/opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
+$ unzip opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
+$ cd ..
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm-linux-gnueabihf.toolchain.cmake -DCMAKE_INSTALL_PREFIX=install ..
 $ make install
 ```
 
-编译完成后，生成的可执行示例存放在 `ax-samples/build/install/bin/` 路径下：
+编译完成后，生成的可执行示例存放在 `ax-pipeline/build/install/bin/` 路径下：
 
 ```bash
 ax-pipeline/build$ tree install
