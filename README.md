@@ -1,9 +1,9 @@
 # ax-pipeline
-基于 AXear-Pi (AX620A) 的 Pipeline 示例，展示 ISP、图像处理、NPU、编码、显示 模块基础调用方法，利于用户二次开发自己的多媒体应用。
+**AX-Pipeline** 由 **[爱芯元智](https://www.axera-tech.com/)** 主导开发。该项目基于 **AXera-Pi** 展示 **ISP**、**图像处理**、**NPU**、**编码**、**显示** 等功能模块软件调用方法，方便社区开发者进行快速评估和二次开发自己的多媒体应用。
 
 ## 已支持开发板
 
-- AXera-Pi(AX620A)
+- [AXera-Pi](https://wiki.sipeed.com/m3axpi)(AX620A)
 
 ## 快速上手
 
