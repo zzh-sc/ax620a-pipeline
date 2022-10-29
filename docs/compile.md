@@ -15,17 +15,6 @@ ax-pipeline 的源码编译目前有两种实现路径：
 - cmake 版本大于等于 3.13
 - AX620A/U 配套的交叉编译工具链 `arm-linux-gnueabihf-gxx` 已添加到环境变量中
 
-### 3rdparty 准备
-
-- 下载预编译好的 OpenCV 库文件 [[AX620A/U 匹配](https://github.com/AXERA-TECH/ax-samples/releases/download/v0.1/opencv-arm-linux-gnueabihf-gcc-7.5.0.zip)]；
-- 在 ax-pipeline 创建 3rdparty 文件，并将下载好的 OpenCV 库文件压缩包解压到该文件夹中。
-
-### 安装交叉编译工具链
-
-- Arm32 Linux 交叉编译工具链[获取地址](http://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz)
-
-
-
 ### 编译过程
 
 git clone 下载源码，进入 ax-pipeline 根目录，创建 cmake 编译任务：
@@ -37,10 +26,14 @@ $ mkdir 3rdparty
 $ cd 3rdparty
 $ wget https://github.com/AXERA-TECH/ax-samples/releases/download/v0.1/opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
 $ unzip opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
+$ wget http://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
+$ tar -xvf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
+$ export PATH=$PATH:$PWD/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/
 $ cd ..
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm-linux-gnueabihf.toolchain.cmake -DCMAKE_INSTALL_PREFIX=install ..
+$ make -j8
 $ make install
 ```
 
