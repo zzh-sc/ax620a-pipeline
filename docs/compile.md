@@ -16,19 +16,31 @@ ax-pipeline 的源码编译目前有两种实现路径：
 - AX620A/U 配套的交叉编译工具链 `arm-linux-gnueabihf-gxx` 已添加到环境变量中
 
 ### 编译过程
-
-git clone 下载源码，进入 ax-pipeline 根目录，创建 cmake 编译任务：
+- 新手用户请确保以下每一步的所有命令都成功运行无误再进行下一步命令
+- 如果单独某一部分的命令出错，请及时在技术交流 QQ 群反馈，QQ 群:139953715
+- 反馈时请清楚的描述遇到的问题以及错误
+  
+1、git clone 下载源码，进入 ax-pipeline 根目录
 
 ```bash
 $ git clone --recursive https://github.com/AXERA-TECH/ax-pipeline.git
 $ cd ax-pipeline
+```
+2、创建 3rdparty，下载opencv
+```
 $ mkdir 3rdparty
 $ cd 3rdparty
 $ wget https://github.com/AXERA-TECH/ax-samples/releases/download/v0.1/opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
 $ unzip opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
+```
+3、下载并配置交叉编译工具链（如果已经配置并确定可用，这一部分可以跳过）
+```
 $ wget http://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
 $ tar -xvf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
 $ export PATH=$PATH:$PWD/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/
+```
+4、创建 build 目录，并创建 cmake 编译任务
+```
 $ cd ..
 $ mkdir build
 $ cd build
@@ -37,7 +49,7 @@ $ make -j8
 $ make install
 ```
 
-编译完成后，生成的可执行示例存放在 `ax-pipeline/build/install/bin/` 路径下：
+5、编译完成后，生成的可执行示例存放在 `ax-pipeline/build/install/bin/` 路径下：
 
 ```bash
 ax-pipeline/build$ tree install

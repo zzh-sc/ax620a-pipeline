@@ -30,7 +30,17 @@ typedef struct _osd_utils_img
 extern "C"
 {
 #endif
+    /// @brief 创建一张四通道透明背景图片，用作 osd 绘制字符串
+    /// @param charlen 图片最大支持的字符串长度
+    /// @param fontscale 图片中字符串的大小，详情参考opencv中putText的 fontscale 参数
+    /// @param out 创建的图片
     void genImg(int charlen, float fontscale, osd_utils_img *out);
+    /// @brief 在图片中绘制透明背景的字符串，输出的图片是从预先创建的图片上截取的内存创建的，此操作目的是为了减少内存申请，请不要重复释放
+    /// @param text 需要绘制的字符串
+    /// @param fontscale 图片中字符串的大小，详情参考opencv中putText的 fontscale 参数
+    /// @param base 预先创建的四通道透明图片
+    /// @param out 从预先创建的四通道透明图片中创建的图片
+    /// @return 
     int putText(char *text, float fontscale, osd_utils_img *base, osd_utils_img *out);
     void releaseImg(osd_utils_img *img);
     void drawObjs(osd_utils_img *out, float fontscale, sample_run_joint_results *results);
