@@ -31,14 +31,12 @@ target_link_libraries (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ax_venc ax_ivp
 target_link_libraries (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE sns_os04a10 sns_os04a10_master sns_os04a10_slave sns_gc4653)
 
 # openssl
-target_include_directories (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ${BSP_MSP_DIR}/../../third-party/openssl/include)
 target_link_directories (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ${BSP_MSP_DIR}/../../third-party/openssl/lib)
-target_link_libraries (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ssl crypto)
 
 # rtsp
 target_include_directories (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ../rtsp/inc)
 target_link_directories (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ../rtsp/lib)
-target_link_libraries (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ax_rtsp)
+target_link_libraries (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ax_rtsp ssl crypto)
 
 
 install (TARGETS sample_vin_ivps_joint_venc_rtsp_vo DESTINATION bin)
