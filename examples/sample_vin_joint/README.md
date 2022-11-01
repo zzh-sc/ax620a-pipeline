@@ -6,6 +6,6 @@
 
 ## 快速体验
 ```
-# wget https://github.com/AXERA-TECH/ax-models/blob/main/ax620/yolov5s_sub_nv12_11.joint
+# wget https://github.com/AXERA-TECH/ax-models/raw/main/ax620/yolov5s_sub_nv12_11.joint
 # ./sample_vin_joint -m ./yolov5s_sub_nv12_11.joint -c 0
 ```
