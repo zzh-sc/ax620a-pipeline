@@ -189,8 +189,10 @@ static volatile AX_S32 gLoopExit = 0;
 static AX_S32 g_isp_force_loop_exit = 0;
 
 static void *gJointHandle = NULL;
-int SAMPLE_ALGO_WIDTH;  // 640
-int SAMPLE_ALGO_HEIGHT; // 640
+AX_BOOL b_runjoint = AX_FALSE;
+
+int SAMPLE_ALGO_WIDTH = 640;  // 640
+int SAMPLE_ALGO_HEIGHT = 640; // 640
 int SAMPLE_MAJOR_STREAM_WIDTH;
 int SAMPLE_MAJOR_STREAM_HEIGHT;
 
@@ -236,13 +238,13 @@ static void *getYuv(void *arg)
         usleep(20 * 1000);
 
         ALOGN(" gCams[i].nPipeId = %d, w/h %d %d, enImgFormat %d, u64SeqNum = %lld, u64PTS = %lld, u32FrameSize: %d, Phy=%llu Vir=%llu\n",
-                     gCams[i].nPipeId,
-                     img_info.tFrameInfo.stVFrame.u32Width, img_info.tFrameInfo.stVFrame.u32Height,
-                     img_info.tFrameInfo.stVFrame.enImgFormat,
-                     img_info.tFrameInfo.stVFrame.u64SeqNum, img_info.tFrameInfo.stVFrame.u64PTS,
-                     img_info.tFrameInfo.stVFrame.u32FrameSize,
-                     img_info.tFrameInfo.stVFrame.u64PhyAddr[0],
-                     img_info.tFrameInfo.stVFrame.u64VirAddr[0]);
+              gCams[i].nPipeId,
+              img_info.tFrameInfo.stVFrame.u32Width, img_info.tFrameInfo.stVFrame.u32Height,
+              img_info.tFrameInfo.stVFrame.enImgFormat,
+              img_info.tFrameInfo.stVFrame.u64SeqNum, img_info.tFrameInfo.stVFrame.u64PTS,
+              img_info.tFrameInfo.stVFrame.u32FrameSize,
+              img_info.tFrameInfo.stVFrame.u64PhyAddr[0],
+              img_info.tFrameInfo.stVFrame.u64VirAddr[0]);
 
         pSrcVirAddr = AX_SYS_Mmap(img_info.tFrameInfo.stVFrame.u64PhyAddr[0], img_info.tFrameInfo.stVFrame.u32FrameSize);
         AX_SYS_Munmap(pSrcVirAddr, img_info.tFrameInfo.stVFrame.u32FrameSize);
@@ -379,6 +381,7 @@ int main(int argc, char *argv[])
         {
         case 'm':
             strcpy(model_path, optarg);
+            b_runjoint = AX_TRUE;
             break;
         case 'c':
             eSysCase = (COMMON_SYS_CASE_E)atoi(optarg);
@@ -597,13 +600,20 @@ int main(int argc, char *argv[])
         goto EXIT;
     }
 
-    axRet = sample_run_joint_init(model_path, &gJointHandle, &SAMPLE_ALGO_WIDTH, &SAMPLE_ALGO_HEIGHT);
-    if (0 != axRet)
+    if (b_runjoint == AX_TRUE)
     {
-        ALOGE("sample_run_joint_init failed,s32Ret:0x%x\n", axRet);
-        goto EXIT;
+        axRet = sample_run_joint_init(model_path, &gJointHandle, &SAMPLE_ALGO_WIDTH, &SAMPLE_ALGO_HEIGHT);
+        if (0 != axRet)
+        {
+            ALOGE("sample_run_joint_init failed,s32Ret:0x%x\n", axRet);
+            goto EXIT;
+        }
+        ALOGN("load model %s success!\n", model_path);
     }
-    ALOGN("load model %s success!\n", model_path);
+    else
+    {
+        ALOGN("Not specified model file\n");
+    }
 
     COMMON_CAM_Init();
 

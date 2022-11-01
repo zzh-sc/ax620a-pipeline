@@ -113,9 +113,10 @@ volatile AX_S32 gLoopExit = 0;
 static AX_S32 g_isp_force_loop_exit = 0;
 
 void *gJointHandle = NULL;
+AX_BOOL b_runjoint = AX_FALSE;
 
-int SAMPLE_ALGO_WIDTH;  // 640
-int SAMPLE_ALGO_HEIGHT; // 640
+int SAMPLE_ALGO_WIDTH = 640;  // 640
+int SAMPLE_ALGO_HEIGHT = 640; // 640
 int SAMPLE_MAJOR_STREAM_WIDTH;
 int SAMPLE_MAJOR_STREAM_HEIGHT;
 
@@ -278,6 +279,7 @@ int main(int argc, char *argv[])
         {
         case 'm':
             strcpy(model_path, optarg);
+            b_runjoint = AX_TRUE;
             break;
         case 'c':
             eSysCase = (COMMON_SYS_CASE_E)atoi(optarg);
@@ -471,13 +473,20 @@ int main(int argc, char *argv[])
         现在默认 IVPS 输出的 AI 图像通道，会将图像置中并填充
         本 SAMPLE 的 AI 只支持 NV12 的输入
      */
-    s32Ret = sample_run_joint_init(model_path, &gJointHandle, &SAMPLE_ALGO_WIDTH, &SAMPLE_ALGO_HEIGHT);
-    if (0 != s32Ret)
+    if (b_runjoint == AX_TRUE)
     {
-        ALOGE("sample_run_joint_init failed,s32Ret:0x%x\n", s32Ret);
-        goto EXIT_2;
+        s32Ret = sample_run_joint_init(model_path, &gJointHandle, &SAMPLE_ALGO_WIDTH, &SAMPLE_ALGO_HEIGHT);
+        if (0 != s32Ret)
+        {
+            ALOGE("sample_run_joint_init failed,s32Ret:0x%x\n", s32Ret);
+            goto EXIT_2;
+        }
+        ALOGN("load model %s success!\n", model_path);
     }
-    ALOGN("load model %s success!\n", model_path);
+    else
+    {
+        ALOGN("Not specified model file\n");
+    }
 
     /*step 3:camera init*/
     s32Ret = COMMON_CAM_Init();

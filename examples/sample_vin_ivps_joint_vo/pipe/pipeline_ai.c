@@ -85,6 +85,12 @@ AX_VOID *GetFrameThread(AX_VOID *pArg)
             }
             pthread_mutex_unlock(&g_result_mutex);
         }
+        else
+        {
+            pthread_mutex_lock(&g_result_mutex);
+            memset(&pResult_disp, 0, sizeof(sample_run_joint_results));
+            pthread_mutex_unlock(&g_result_mutex);
+        }
 
         ret = AX_IVPS_ReleaseChnFrame(IvpsGrp, IvpsChn, &tVideoFrame);
     }
