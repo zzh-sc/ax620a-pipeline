@@ -135,7 +135,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
     osd_utils_img list_baseimgs[SAMPLE_RECT_BOX_COUNT];
     for (AX_U8 i = 0; i < SAMPLE_RECT_BOX_COUNT; ++i)
     {
-        genImg(16, nCfgIndex == 0 ? 2.0 : 1.0, &list_baseimgs[i]);
+        genImg(SAMPLE_OBJ_NAME_MAX_LEN, nCfgIndex == 0 ? 2.0 : 1.0, &list_baseimgs[i]);
     }
 
     AX_S32 ret = 0;

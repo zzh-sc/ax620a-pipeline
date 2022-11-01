@@ -18,7 +18,7 @@
  * Author: ZHEQIUSHUI
  */
 
-#include "../sample_vin_ivps_joint_venc_rtsp_vo.h"
+#include "../sample_vin_ivps_joint_vo.h"
 #include "../../sample_run_joint/sample_run_joint.h"
 #include "../../utilities/osd_utils.h"
 
@@ -34,7 +34,7 @@ typedef struct
 
 sample_run_joint_results pResult_disp;
 
-AX_U32 OSD_Grp[SAMPLE_REGION_COUNT] = {0, 2};
+AX_U32 OSD_Grp[SAMPLE_REGION_COUNT] = {0};
 
 AX_VOID StartOverlay(AX_VOID)
 {
@@ -109,8 +109,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
     prctl(PR_SET_NAME, "SAMPLE_IVPS_RGN");
 
     RGN_GROUP_CFG_T tRgnGroupConfig[SAMPLE_REGION_COUNT] = {
-        {OSD_Grp[0], 0x11, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT, AX_IVPS_REGION_MAX_DISP_NUM, AX_IVPS_RGN_LAYER_COVER},
-        {OSD_Grp[1], 0x11, SAMPLE_MINOR_STREAM_WIDTH, SAMPLE_MINOR_STREAM_HEIGHT, AX_IVPS_REGION_MAX_DISP_NUM, AX_IVPS_RGN_LAYER_COVER},
+        {OSD_Grp[0], 0x11, SAMPLE_MINOR_STREAM_WIDTH, SAMPLE_MINOR_STREAM_HEIGHT, AX_IVPS_REGION_MAX_DISP_NUM, AX_IVPS_RGN_LAYER_COVER},
     };
 
     IVPS_REGION_PARAM_PTR pThreadParam = (IVPS_REGION_PARAM_PTR)pArg;
@@ -135,7 +134,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
     osd_utils_img list_baseimgs[SAMPLE_RECT_BOX_COUNT];
     for (AX_U8 i = 0; i < SAMPLE_RECT_BOX_COUNT; ++i)
     {
-        genImg(SAMPLE_OBJ_NAME_MAX_LEN, nCfgIndex == 0 ? 2.0 : 0.6, &list_baseimgs[i]);
+        genImg(SAMPLE_OBJ_NAME_MAX_LEN, 0.6, &list_baseimgs[i]);
     }
 
     AX_S32 ret = 0;
@@ -175,7 +174,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
                     AX_U32 nChnHeight = tGrpCfg->nChnHeight;
 
                     tDisp.arrDisp[i].uDisp.tPolygon.tRect.nX = (AX_U32)(pResult_disp.objects[i].x * nChnWidth);
-                    tDisp.arrDisp[i].uDisp.tPolygon.tRect.nY = (AX_U32)(pResult_disp.objects[i].y * nChnHeight) + (nCfgIndex == 0 ? 0 : 28);
+                    tDisp.arrDisp[i].uDisp.tPolygon.tRect.nY = (AX_U32)(pResult_disp.objects[i].y * nChnHeight) + 28;
                     tDisp.arrDisp[i].uDisp.tPolygon.tRect.nW = (AX_U32)(pResult_disp.objects[i].w * nChnWidth);
                     tDisp.arrDisp[i].uDisp.tPolygon.tRect.nH = (AX_U32)(pResult_disp.objects[i].h * nChnHeight);
                     tDisp.arrDisp[i].uDisp.tPolygon.bSolid = AX_FALSE;
@@ -192,7 +191,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
                     AX_U32 nChnWidth = tGrpCfg->nChnWidth;
                     AX_U32 nChnHeight = tGrpCfg->nChnHeight;
                     osd_utils_img out;
-                    putText(pResult_disp.objects[i].objname, nCfgIndex == 0 ? 2.0 : 0.6, &list_baseimgs[i], &out);
+                    putText(pResult_disp.objects[i].objname, 0.6, &list_baseimgs[i], &out);
 
                     // int width,height;
                     // genARGB_v2(pResult_disp.objects[i].objname, nCfgIndex==0?2.0:1.0, &width, &height, list_rgba_data[i]);

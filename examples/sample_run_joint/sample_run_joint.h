@@ -22,13 +22,14 @@
 #define _SAMPLE_RUN_JOINT_H_
 
 #define SAMPLE_MAX_BBOX_COUNT 16
+#define SAMPLE_OBJ_NAME_MAX_LEN 16
 
 typedef struct _sample_run_joint_object
 {
     float x, y, w, h;
     int label;
     float prob;
-    char objname[16];
+    char objname[SAMPLE_OBJ_NAME_MAX_LEN];
 } sample_run_joint_object;
 
 typedef struct _sample_run_joint_results

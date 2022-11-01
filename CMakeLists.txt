@@ -40,4 +40,5 @@ message(STATUS "BSP_MSP_DIR = ${BSP_MSP_DIR}")
 
 add_subdirectory(examples/sample_vin_ivps_joint_venc_rtsp_vo)
 add_subdirectory(examples/sample_vin_ivps_joint_venc_rtsp)
+add_subdirectory(examples/sample_vin_ivps_joint_vo)
 add_subdirectory(examples/sample_vin_joint)
