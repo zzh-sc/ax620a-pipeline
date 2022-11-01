@@ -265,7 +265,7 @@ static void *getYuv(void *arg)
             {
                 for (AX_U8 i = 0; i < pResult.size; i++)
                 {
-                    printf("%d %s [%d,%d,%d,%d]\n", i, pResult.objects[i].objname, pResult.objects[i].x, pResult.objects[i].y, pResult.objects[i].w, pResult.objects[i].h);
+                    printf("%2d %16s [%4.0f,%4.0f,%4.0f,%4.0f]\n", i, pResult.objects[i].objname, pResult.objects[i].x, pResult.objects[i].y, pResult.objects[i].w, pResult.objects[i].h);
                 }
             }
         }

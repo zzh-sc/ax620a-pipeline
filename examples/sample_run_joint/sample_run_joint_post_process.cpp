@@ -26,9 +26,9 @@
 
 #include "joint.h"
 
-#define PROB_THRESHOLD 0.4f
-#define NMS_THRESHOLD 0.45f
-#define YOLOV5_CLASS_NUM 80
+float PROB_THRESHOLD = 0.4f;
+float NMS_THRESHOLD = 0.45f;
+int YOLOV5_CLASS_NUM = 80;
 
 const float ANCHORS[18] = {10, 13, 16, 30, 33, 23, 30, 61, 62, 45, 59, 119, 116, 90, 156, 198, 373, 326};
 

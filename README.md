@@ -12,6 +12,7 @@
 
 ### 示例
 - [sample_vin_joint](examples/sample_vin_joint)
+- [sample_vin_ivps_joint_vo](examples/sample_vin_ivps_joint_vo)
 - [sample_vin_ivps_joint_venc_rtsp](examples/sample_vin_ivps_joint_venc_rtsp)
 - [sample_vin_ivps_joint_venc_rtsp_vo](examples/sample_vin_ivps_joint_venc_rtsp_vo)
 
