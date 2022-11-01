@@ -40,4 +40,3 @@ target_link_libraries (sample_vin_ivps_joint_venc_rtsp_vo PRIVATE ax_rtsp ssl cr
 
 
 install (TARGETS sample_vin_ivps_joint_venc_rtsp_vo DESTINATION bin)
-install (FILES ${CMAKE_SOURCE_DIR}/examples/rtsp/lib/libax_rtsp.so DESTINATION bin)

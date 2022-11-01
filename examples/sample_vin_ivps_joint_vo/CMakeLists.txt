@@ -37,4 +37,3 @@ target_link_libraries (sample_vin_ivps_joint_vo PRIVATE sns_os04a10 sns_os04a10_
 
 
 install (TARGETS sample_vin_ivps_joint_vo DESTINATION bin)
-install (FILES ${CMAKE_SOURCE_DIR}/examples/rtsp/lib/libax_rtsp.so DESTINATION bin)
