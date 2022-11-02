@@ -1,0 +1,28 @@
+{
+    "YOLOV5_ANCHORS": [
+        4,
+        5,
+        8,
+        10,
+        13,
+        16,
+        23,
+        29,
+        43,
+        55,
+        73,
+        105,
+        146,
+        217,
+        231,
+        300,
+        335,
+        433
+    ],
+    "YOLOV5_CLASS_NAMES": [
+        "face"
+    ],
+    "YOLOV5_CLASS_NUM": 1,
+    "YOLOV5_NMS_THRESHOLD": 0.44999998807907104,
+    "YOLOV5_PROB_THRESHOLD": 0.4000000059604645
+}

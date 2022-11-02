@@ -284,7 +284,7 @@ static void *getYuv(void *arg)
 AX_S32 SysRun()
 {
     pthread_t tgetYuvThread;
-    AX_S32 axRet = 0, i;
+    AX_S32 s32Ret = 0, i;
     g_isp_force_loop_exit = 0;
     for (i = 0; i < MAX_CAMERAS; i++)
     {
@@ -308,15 +308,15 @@ AX_S32 SysRun()
         {
             pthread_cancel(gCams[i].tIspProcThread);
             pthread_cancel(tgetYuvThread);
-            axRet = pthread_join(gCams[i].tIspProcThread, NULL);
-            if (axRet < 0)
+            s32Ret = pthread_join(gCams[i].tIspProcThread, NULL);
+            if (s32Ret < 0)
             {
-                ALOGE(" isp run thread exit failed, ret=0x%x.\n", axRet);
+                ALOGE(" isp run thread exit failed, ret=0x%x.\n", s32Ret);
             }
-            axRet = pthread_join(tgetYuvThread, NULL);
-            if (axRet < 0)
+            s32Ret = pthread_join(tgetYuvThread, NULL);
+            if (s32Ret < 0)
             {
-                ALOGE(" getyuv thread exit failed, ret=0x%x.\n", axRet);
+                ALOGE(" getyuv thread exit failed, ret=0x%x.\n", s32Ret);
             }
         }
     }
@@ -327,6 +327,7 @@ AX_S32 SysRun()
 AX_VOID PrintHelp()
 {
     printf("command:\n");
+    printf("\t-p: yolov5 param file path\n");
     printf("\t-m: Joint model path\n");
     printf("\t-c: ISP Test Case:\n");
     printf("\t\t0: Single OS04A10\n");
@@ -362,7 +363,7 @@ int main(int argc, char *argv[])
     COMMON_SYS_ARGS_T tCommonArgs = {0};
     AX_SNS_HDR_MODE_E eHdrMode = AX_SNS_LINEAR_MODE;
     SAMPLE_SNS_TYPE_E eSnsType = OMNIVISION_OS04A10;
-    AX_S32 axRet = 0;
+    AX_S32 s32Ret = 0;
     char model_path[256] = "./yolov5s_sub_nv12_11.joint";
 
     signal(SIGPIPE, SIG_IGN);
@@ -374,7 +375,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    while ((c = getopt(argc, argv, "m:c:e:h")) != -1)
+    while ((c = getopt(argc, argv, "p:m:c:e:h")) != -1)
     {
         isExit = 0;
         switch (c)
@@ -383,6 +384,15 @@ int main(int argc, char *argv[])
             strcpy(model_path, optarg);
             b_runjoint = AX_TRUE;
             break;
+        case 'p':
+        {
+            int ret = sample_parse_yolov5_param(optarg);
+            if (ret != 0)
+            {
+                isExit = 1;
+            }
+            break;
+        }
         case 'c':
             eSysCase = (COMMON_SYS_CASE_E)atoi(optarg);
             break;
@@ -586,15 +596,15 @@ int main(int argc, char *argv[])
 
     AX_NPU_SDK_EX_ATTR_T sNpuAttr;
     sNpuAttr.eHardMode = AX_NPU_VIRTUAL_1_1;
-    axRet = AX_NPU_SDK_EX_Init_with_attr(&sNpuAttr);
-    if (0 != axRet)
+    s32Ret = AX_NPU_SDK_EX_Init_with_attr(&sNpuAttr);
+    if (0 != s32Ret)
     {
-        ALOGE("AX_NPU_SDK_EX_Init_with_attr failed, ret=0x%x.\n", axRet);
+        ALOGE("AX_NPU_SDK_EX_Init_with_attr failed, ret=0x%x.\n", s32Ret);
         return -1;
     }
 
-    axRet = COMMON_SYS_Init(&tCommonArgs);
-    if (axRet)
+    s32Ret = COMMON_SYS_Init(&tCommonArgs);
+    if (s32Ret)
     {
         ALOGE("isp sys init fail\n");
         goto EXIT;
@@ -602,10 +612,10 @@ int main(int argc, char *argv[])
 
     if (b_runjoint == AX_TRUE)
     {
-        axRet = sample_run_joint_init(model_path, &gJointHandle, &SAMPLE_ALGO_WIDTH, &SAMPLE_ALGO_HEIGHT);
-        if (0 != axRet)
+        s32Ret = sample_run_joint_init(model_path, &gJointHandle, &SAMPLE_ALGO_WIDTH, &SAMPLE_ALGO_HEIGHT);
+        if (0 != s32Ret)
         {
-            ALOGE("sample_run_joint_init failed,s32Ret:0x%x\n", axRet);
+            ALOGE("sample_run_joint_init failed,s32Ret:0x%x\n", s32Ret);
             goto EXIT;
         }
         ALOGN("load model %s success!\n", model_path);
@@ -621,13 +631,13 @@ int main(int argc, char *argv[])
     {
         if (eSysCase == SYS_CASE_SINGLE_DVP || eSysCase == SYS_CASE_SINGLE_BT601 || eSysCase == SYS_CASE_SINGLE_BT656 || eSysCase == SYS_CASE_SINGLE_BT1120 || eSysCase == SYS_CASE_MIPI_YUV)
         {
-            axRet = COMMON_CAM_DVP_Open(&gCams[i]);
+            s32Ret = COMMON_CAM_DVP_Open(&gCams[i]);
         }
         else
         {
-            axRet = COMMON_CAM_Open(&gCams[i]);
+            s32Ret = COMMON_CAM_Open(&gCams[i]);
         }
-        if (axRet)
+        if (s32Ret)
             goto EXIT;
         gCams[i].bOpen = AX_TRUE;
         ALOGN("camera %d is open\n", i);
@@ -637,16 +647,16 @@ int main(int argc, char *argv[])
     /* Net Preview */
     ALOGN("Start the service on the tuning device side.\n");
 
-    axRet = AX_NT_StreamInit(6000);
-    if (0 != axRet)
+    s32Ret = AX_NT_StreamInit(6000);
+    if (0 != s32Ret)
     {
-        ALOGE("AX_NT_StreamInit failed, ret=0x%x.\n", axRet);
+        ALOGE("AX_NT_StreamInit failed, ret=0x%x.\n", s32Ret);
         return -1;
     }
-    axRet = AX_NT_CtrlInit(8082);
-    if (0 != axRet)
+    s32Ret = AX_NT_CtrlInit(8082);
+    if (0 != s32Ret)
     {
-        ALOGE("AX_NT_CtrlInit failed, ret=0x%x.\n", axRet);
+        ALOGE("AX_NT_CtrlInit failed, ret=0x%x.\n", s32Ret);
         return -1;
     }
 

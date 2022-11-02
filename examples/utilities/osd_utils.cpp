@@ -24,7 +24,7 @@
 
 #include "sstream"
 
-void genImg(int charlen, float fontscale, osd_utils_img *out)
+void genImg(int charlen, float fontscale, int thickness,osd_utils_img *out)
 {
     std::stringstream ss;
 
@@ -35,7 +35,7 @@ void genImg(int charlen, float fontscale, osd_utils_img *out)
     std::string text = ss.str();
 
     int baseLine = 0;
-    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, fontscale, 2, &baseLine);
+    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, fontscale, thickness, &baseLine);
 
     out->width = label_size.width;
     out->height = label_size.height * 1.5;
@@ -44,10 +44,10 @@ void genImg(int charlen, float fontscale, osd_utils_img *out)
     memset(out->data, 0, out->width * out->height * out->channel);
 }
 
-int putText(char *text, float fontscale, osd_utils_img *base, osd_utils_img *out)
+int putText(char *text, float fontscale, int thickness, osd_utils_img *base, osd_utils_img *out)
 {
     int baseLine = 0;
-    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, fontscale, 2, &baseLine);
+    cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, fontscale, thickness, &baseLine);
     out->width = label_size.width;
     out->height = label_size.height * 1.5;
     out->channel = 4;

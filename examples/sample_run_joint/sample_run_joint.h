@@ -58,6 +58,10 @@ extern "C"
     /// @return 
     int sample_run_joint_inference(void *handle, const void *pstFrame, int src_width, int src_height, sample_run_joint_results *pResults);
     int sample_run_joint_release(void *handle);
+    /// @brief 通过 json 解析 yolov5 所需的参数，如果某些 key 置空，则不更新该参数
+    /// @param json_file_path 
+    /// @return 
+    int sample_parse_yolov5_param(char *json_file_path);
 #ifdef __cplusplus
 }
 #endif

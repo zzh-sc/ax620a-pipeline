@@ -134,7 +134,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
     osd_utils_img list_baseimgs[SAMPLE_RECT_BOX_COUNT];
     for (AX_U8 i = 0; i < SAMPLE_RECT_BOX_COUNT; ++i)
     {
-        genImg(SAMPLE_OBJ_NAME_MAX_LEN, 0.6, &list_baseimgs[i]);
+        genImg(SAMPLE_OBJ_NAME_MAX_LEN, 0.6, 1, &list_baseimgs[i]);
     }
 
     AX_S32 ret = 0;
@@ -191,7 +191,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
                     AX_U32 nChnWidth = tGrpCfg->nChnWidth;
                     AX_U32 nChnHeight = tGrpCfg->nChnHeight;
                     osd_utils_img out;
-                    putText(pResult_disp.objects[i].objname, 0.6, &list_baseimgs[i], &out);
+                    putText(pResult_disp.objects[i].objname, 0.6, 1, &list_baseimgs[i], &out);
 
                     // int width,height;
                     // genARGB_v2(pResult_disp.objects[i].objname, nCfgIndex==0?2.0:1.0, &width, &height, list_rgba_data[i]);

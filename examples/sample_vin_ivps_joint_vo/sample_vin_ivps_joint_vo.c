@@ -234,7 +234,7 @@ static AX_VOID __sigint(int iSigNo)
 static AX_VOID PrintHelp(char *testApp)
 {
     printf("Usage:%s -h for help\n\n", testApp);
-
+    printf("\t-p: yolov5 param file path\n");
     printf("\t-m: Joint model path\n");
 
     printf("\t-c: ISP Test Case:\n");
@@ -272,9 +272,8 @@ int main(int argc, char *argv[])
 
     ALOGN("sample_vin_ivps_joint_venc_rtsp begin\n\n");
 
-    while ((ch = getopt(argc, argv, "m:c:e:v:r:h")) != -1)
+    while ((ch = getopt(argc, argv, "p:m:c:e:v:r:h")) != -1)
     {
-        isExit = 0;
         switch (ch)
         {
         case 'm':
@@ -284,6 +283,15 @@ int main(int argc, char *argv[])
         case 'c':
             eSysCase = (COMMON_SYS_CASE_E)atoi(optarg);
             break;
+        case 'p':
+        {
+            int ret = sample_parse_yolov5_param(optarg);
+            if (ret != 0)
+            {
+                isExit = 1;
+            }
+            break;
+        }
         case 'e':
             eHdrMode = (AX_SNS_HDR_MODE_E)atoi(optarg);
             break;
