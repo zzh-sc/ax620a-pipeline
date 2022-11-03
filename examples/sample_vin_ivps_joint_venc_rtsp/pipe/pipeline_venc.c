@@ -121,9 +121,9 @@ AX_S32 SampleVencInit(COMMON_VENC_CASE_E eVencType)
         return s32Ret;
     }
 
-    config.stRCInfo.eRCType = VENC_RC_CBR;
-    config.nGOP = 30;
-    config.nBitrate = 2000;
+    config.stRCInfo.eRCType = VENC_RC_VBR;
+    config.nGOP = 50;
+    config.nBitrate = 5000;
     config.stRCInfo.nMinQp = 10;
     config.stRCInfo.nMaxQp = 51;
     config.stRCInfo.nMinIQp = 10;
