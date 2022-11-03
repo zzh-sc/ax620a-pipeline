@@ -21,7 +21,7 @@
 #ifndef _SAMPLE_RUN_JOINT_H_
 #define _SAMPLE_RUN_JOINT_H_
 
-#define SAMPLE_MAX_BBOX_COUNT 16
+#define SAMPLE_MAX_BBOX_COUNT 64
 #define SAMPLE_OBJ_NAME_MAX_LEN 16
 
 typedef struct _sample_run_joint_object
