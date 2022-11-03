@@ -73,20 +73,20 @@ void releaseImg(osd_utils_img *img)
     }
 }
 
-void drawObjs(osd_utils_img *out, float fontscale, sample_run_joint_results *results)
+void drawObjs(osd_utils_img *out, float fontscale, int thickness,sample_run_joint_results *results, int offset_x, int offset_y)
 {
     cv::Mat image(out->height, out->width, CV_8UC4, out->data);
     for (size_t i = 0; i < results->size; i++)
     {
-        cv::Rect rect(results->objects[i].x * out->width,
-                      results->objects[i].y * out->height,
+        cv::Rect rect(results->objects[i].x * out->width + offset_x,
+                      results->objects[i].y * out->height + offset_y,
                       results->objects[i].w * out->width,
                       results->objects[i].h * out->height);
 
-        cv::rectangle(image, rect, cv::Scalar(255, 0, 0, 255), 2);
+        cv::rectangle(image, rect, cv::Scalar(255, 0, 0, 255), thickness);
 
         int baseLine = 0;
-        cv::Size label_size = cv::getTextSize(results->objects[i].objname, cv::FONT_HERSHEY_SIMPLEX, fontscale, 2, &baseLine);
+        cv::Size label_size = cv::getTextSize(results->objects[i].objname, cv::FONT_HERSHEY_SIMPLEX, fontscale, thickness, &baseLine);
 
         int x = rect.x;
         int y = rect.y - label_size.height - baseLine;
@@ -99,6 +99,6 @@ void drawObjs(osd_utils_img *out, float fontscale, sample_run_joint_results *res
                       cv::Scalar(255, 255, 255, 255), -1);
 
         cv::putText(image, results->objects[i].objname, cv::Point(x, y + label_size.height), cv::FONT_HERSHEY_SIMPLEX, fontscale,
-                    cv::Scalar(0, 0, 0, 255));
+                    cv::Scalar(0, 0, 0, 255), thickness);
     }
 }

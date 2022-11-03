@@ -131,6 +131,7 @@ AX_VOID StartOverlay(AX_VOID);
 AX_VOID StopOverlay(AX_VOID);
 // osd thread
 AX_VOID *RgnThreadFunc(AX_VOID *pArg);
+AX_VOID *RgnThreadFunc_V2(AX_VOID *pArg);
 
 /* ivps task */
 int SampleIvpsInit();
@@ -162,7 +163,7 @@ AX_S32 IVPS_ThreadStart(AX_VOID *p)
     {
         if (AX_IVPS_INVALID_REGION_HANDLE != g_arrRgnThreadParam[i].hChnRgn)
         {
-            if (0 != pthread_create(&tid, NULL, RgnThreadFunc, (AX_VOID *)&g_arrRgnThreadParam[i]))
+            if (0 != pthread_create(&tid, NULL, RgnThreadFunc_V2, (AX_VOID *)&g_arrRgnThreadParam[i]))
             {
                 return -1;
             }

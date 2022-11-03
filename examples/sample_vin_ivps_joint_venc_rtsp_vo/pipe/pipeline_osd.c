@@ -175,7 +175,7 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
                     AX_U32 nChnHeight = tGrpCfg->nChnHeight;
 
                     tDisp.arrDisp[i].uDisp.tPolygon.tRect.nX = (AX_U32)(pResult_disp.objects[i].x * nChnWidth);
-                    tDisp.arrDisp[i].uDisp.tPolygon.tRect.nY = (AX_U32)(pResult_disp.objects[i].y * nChnHeight) + (nCfgIndex == 0 ? 0 : 28);
+                    tDisp.arrDisp[i].uDisp.tPolygon.tRect.nY = (AX_U32)(pResult_disp.objects[i].y * nChnHeight) + (nCfgIndex == 0 ? 0 : 32);
                     tDisp.arrDisp[i].uDisp.tPolygon.tRect.nW = (AX_U32)(pResult_disp.objects[i].w * nChnWidth);
                     tDisp.arrDisp[i].uDisp.tPolygon.tRect.nH = (AX_U32)(pResult_disp.objects[i].h * nChnHeight);
                     tDisp.arrDisp[i].uDisp.tPolygon.bSolid = AX_FALSE;
@@ -233,92 +233,90 @@ AX_VOID *RgnThreadFunc(AX_VOID *pArg)
     return (AX_VOID *)0;
 }
 
-// AX_VOID *RgnThreadFunc_V2(AX_VOID *pArg)
-// {
-//     if (!pArg) {
-//         return (AX_VOID *)0;
-//     }
+AX_VOID *RgnThreadFunc_V2(AX_VOID *pArg)
+{
+    if (!pArg)
+    {
+        return (AX_VOID *)0;
+    }
 
-//     prctl(PR_SET_NAME, "SAMPLE_IVPS_RGN");
+    prctl(PR_SET_NAME, "SAMPLE_IVPS_RGN");
 
-//     RGN_GROUP_CFG_T tRgnGroupConfig[SAMPLE_REGION_COUNT] = {
-//         {0, 0x11, gCams[0].stChnAttr.tChnAttr[AX_YUV_SOURCE_ID_MAIN].nWidth, gCams[0].stChnAttr.tChnAttr[AX_YUV_SOURCE_ID_MAIN].nHeight, 2, AX_IVPS_RGN_LAYER_COVER},
-//         {2, 0x11, SAMPLE_MINOR_STREAM_WIDTH, SAMPLE_MINOR_STREAM_HEIGHT, 2, AX_IVPS_RGN_LAYER_COVER},
-//     };
+    RGN_GROUP_CFG_T tRgnGroupConfig[SAMPLE_REGION_COUNT] = {
+        {OSD_Grp[0], 0x11, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT, 1, AX_IVPS_RGN_LAYER_COVER},
+        {OSD_Grp[1], 0x11, SAMPLE_MINOR_STREAM_WIDTH, SAMPLE_MINOR_STREAM_HEIGHT, 1, AX_IVPS_RGN_LAYER_COVER},
+    };
 
-//     IVPS_REGION_PARAM_PTR pThreadParam = (IVPS_REGION_PARAM_PTR)pArg;
-//     AX_IVPS_FILTER nFilter  = pThreadParam->nFilter;
-//     IVPS_GRP       nIvpsGrp = pThreadParam->nGroup;
+    IVPS_REGION_PARAM_PTR pThreadParam = (IVPS_REGION_PARAM_PTR)pArg;
+    AX_IVPS_FILTER nFilter = pThreadParam->nFilter;
+    IVPS_GRP nIvpsGrp = pThreadParam->nGroup;
 
-//     AX_U8 nCfgIndex = -1;
-//     for (AX_U32 i = 0; i < SAMPLE_REGION_COUNT; ++i) {
-//         if (nIvpsGrp == tRgnGroupConfig[i].nGroup && nFilter == tRgnGroupConfig[i].nFilter) {
-//             nCfgIndex = i;
-//             break;
-//         }
-//     }
+    AX_U8 nCfgIndex = nIvpsGrp;
 
-//     if (-1 == nCfgIndex) {
-//         ALOGE("Can not find OSD configuration for group %d, filter 0x%x", nIvpsGrp, nFilter);
-//         return (AX_VOID *)0;
-//     }
+    ALOGN("[%d][0x%02x] +++", nIvpsGrp, nFilter);
 
-//     ALOGN("[%d][0x%02x] +++", nIvpsGrp, nFilter);
+    osd_utils_img img_overlay;
+    img_overlay.channel = 4;
+    img_overlay.data = malloc(tRgnGroupConfig[nCfgIndex].nChnWidth * tRgnGroupConfig[nCfgIndex].nChnHeight * 4);
+    img_overlay.width = tRgnGroupConfig[nCfgIndex].nChnWidth;
+    img_overlay.height = tRgnGroupConfig[nCfgIndex].nChnHeight;
 
-//     unsigned char* rgba_data = malloc(tRgnGroupConfig[nCfgIndex].nChnWidth * tRgnGroupConfig[nCfgIndex].nChnHeight * 4);
+    AX_S32 ret = 0;
+    pThreadParam->bExit = AX_FALSE;
+    while (!pThreadParam->bExit && !gLoopExit)
+    {
+        RGN_GROUP_CFG_T *tGrpCfg = &tRgnGroupConfig[nCfgIndex];
+        if (0 == tGrpCfg->nRgnNum)
+        {
+            break;
+        }
+        pthread_mutex_lock(&g_result_mutex);
 
-//     AX_S32 ret = 0;
-//     pThreadParam->bExit = AX_FALSE;
-//     while (!pThreadParam->bExit && !gLoopExit) {
-//         RGN_GROUP_CFG_T *tGrpCfg = &tRgnGroupConfig[nCfgIndex];
-//         if (0 == tGrpCfg->nRgnNum) {
-//             break;
-//         }
-//         pthread_mutex_lock(&g_result_mutex);
+        memset(img_overlay.data, 0, tRgnGroupConfig[nCfgIndex].nChnWidth * tRgnGroupConfig[nCfgIndex].nChnHeight * 4);
+        drawObjs(&img_overlay, nCfgIndex == 0 ? 2.0 : 0.6, nCfgIndex == 0 ? 2.0 : 1.0, &pResult_disp, 0, nCfgIndex == 0 ? 0 : 32);
 
-//         memset(rgba_data, 0, tRgnGroupConfig[nCfgIndex].nChnWidth * tRgnGroupConfig[nCfgIndex].nChnHeight * 4);
-//         drawObjs(rgba_data, tRgnGroupConfig[nCfgIndex].nChnWidth, tRgnGroupConfig[nCfgIndex].nChnHeight, nCfgIndex==0?2.0:1.0, &pResult_disp);
+        AX_IVPS_RGN_DISP_GROUP_S tDisp;
+        memset(&tDisp, 0, sizeof(AX_IVPS_RGN_DISP_GROUP_S));
 
-//         AX_IVPS_RGN_DISP_GROUP_S tDisp;
-//         memset(&tDisp, 0, sizeof(AX_IVPS_RGN_DISP_GROUP_S));
+        tDisp.nNum = tGrpCfg->nRgnNum;
+        tDisp.tChnAttr.nAlpha = 1024;
+        tDisp.tChnAttr.eFormat = AX_FORMAT_RGBA8888;
+        tDisp.tChnAttr.nZindex = nIvpsGrp + 1;
+        tDisp.tChnAttr.nBitColor.nColor = 0xFF0000;
+        tDisp.tChnAttr.nBitColor.bEnable = AX_FALSE;
+        tDisp.tChnAttr.nBitColor.nColorInv = 0xFF;
+        tDisp.tChnAttr.nBitColor.nColorInvThr = 0xA0A0A0;
 
-//         tDisp.nNum = tGrpCfg->nRgnNum;
-//         tDisp.tChnAttr.nAlpha = 1024;
-//         tDisp.tChnAttr.eFormat = AX_FORMAT_RGBA8888;
-//         tDisp.tChnAttr.nZindex = nIvpsGrp + 1;
-//         tDisp.tChnAttr.nBitColor.nColor = 0xFF0000;
-//         tDisp.tChnAttr.nBitColor.bEnable = AX_FALSE;
-//         tDisp.tChnAttr.nBitColor.nColorInv = 0xFF;
-//         tDisp.tChnAttr.nBitColor.nColorInvThr = 0xA0A0A0;
+        tDisp.arrDisp[0].bShow = AX_TRUE;
+        tDisp.arrDisp[0].eType = AX_IVPS_RGN_TYPE_OSD;
 
-//         tDisp.arrDisp[0].bShow = AX_TRUE;
-//         tDisp.arrDisp[0].eType = AX_IVPS_RGN_TYPE_OSD;
+        tDisp.arrDisp[0].uDisp.tOSD.bEnable = AX_TRUE;
+        tDisp.arrDisp[0].uDisp.tOSD.enRgbFormat = AX_FORMAT_RGBA8888;
+        tDisp.arrDisp[0].uDisp.tOSD.u32Zindex = 1;
+        tDisp.arrDisp[0].uDisp.tOSD.u32ColorKey = 0x0;
+        tDisp.arrDisp[0].uDisp.tOSD.u32BgColorLo = 0xFFFFFFFF;
+        tDisp.arrDisp[0].uDisp.tOSD.u32BgColorHi = 0xFFFFFFFF;
+        tDisp.arrDisp[0].uDisp.tOSD.u32BmpWidth = tRgnGroupConfig[nCfgIndex].nChnWidth;
+        tDisp.arrDisp[0].uDisp.tOSD.u32BmpHeight = tRgnGroupConfig[nCfgIndex].nChnHeight;
+        tDisp.arrDisp[0].uDisp.tOSD.u32DstXoffset = 0;
+        tDisp.arrDisp[0].uDisp.tOSD.u32DstYoffset = 0;
+        tDisp.arrDisp[0].uDisp.tOSD.u64PhyAddr = 0;
+        tDisp.arrDisp[0].uDisp.tOSD.pBitmap = img_overlay.data;
 
-//         tDisp.arrDisp[0].uDisp.tOSD.bEnable = AX_TRUE;
-//         tDisp.arrDisp[0].uDisp.tOSD.enRgbFormat = AX_FORMAT_RGBA8888;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32Zindex = 1;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32ColorKey = 0x0;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32BgColorLo = 0xFFFFFFFF;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32BgColorHi = 0xFFFFFFFF;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32BmpWidth = tRgnGroupConfig[nCfgIndex].nChnWidth;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32BmpHeight = tRgnGroupConfig[nCfgIndex].nChnHeight;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32DstXoffset = 0;
-//         tDisp.arrDisp[0].uDisp.tOSD.u32DstYoffset = 0;
-//         tDisp.arrDisp[0].uDisp.tOSD.u64PhyAddr = 0;
-//         tDisp.arrDisp[0].uDisp.tOSD.pBitmap = rgba_data;
+        ret = AX_IVPS_RGN_Update(pThreadParam->hChnRgn, &tDisp);
+        if (0 != ret)
+        {
+            ALOGE("[%d][0x%02x] AX_IVPS_RGN_Update fail, ret=0x%x, hChnRgn=%d", nIvpsGrp, nFilter, ret, pThreadParam->hChnRgn);
+        }
 
-//         ret = AX_IVPS_RGN_Update(pThreadParam->hChnRgn, &tDisp);
-//         if (0 != ret) {
-//             ALOGE("[%d][0x%02x] AX_IVPS_RGN_Update fail, ret=0x%x, hChnRgn=%d", nIvpsGrp, nFilter, ret, pThreadParam->hChnRgn);
-//         }
+        pthread_mutex_unlock(&g_result_mutex);
+        usleep(30000);
+    }
 
-//         pthread_mutex_unlock(&g_result_mutex);
-//         usleep(30000);
-//     }
+    releaseImg(&img_overlay);
+    // free(rgba_data);
 
-//     free(rgba_data);
+    ALOGN("[%d][0x%02x] ---", nIvpsGrp, nFilter);
 
-//     ALOGN("[%d][0x%02x] ---", nIvpsGrp, nFilter);
-
-//     return (AX_VOID *)0;
-// }
+    return (AX_VOID *)0;
+}

@@ -40,10 +40,10 @@ extern "C"
     /// @param fontscale 图片中字符串的大小，详情参考opencv中putText的 fontscale 参数
     /// @param base 预先创建的四通道透明图片
     /// @param out 从预先创建的四通道透明图片中创建的图片
-    /// @return 
-    int putText(char *text, float fontscale, int thickness,osd_utils_img *base, osd_utils_img *out);
+    /// @return
+    int putText(char *text, float fontscale, int thickness, osd_utils_img *base, osd_utils_img *out);
     void releaseImg(osd_utils_img *img);
-    void drawObjs(osd_utils_img *out, float fontscale, sample_run_joint_results *results);
+    void drawObjs(osd_utils_img *out, float fontscale, int thickness, sample_run_joint_results *results, int offset_x, int offset_y);
 #ifdef __cplusplus
 }
 #endif
