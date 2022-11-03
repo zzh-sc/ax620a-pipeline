@@ -1,5 +1,11 @@
 # 如何部署自己的其他模型
 
+### 阅读文档
+
+仔细阅读 [AXera Pulsar 工具链指导手册](https://pulsar-docs.readthedocs.io/zh_CN/latest/index.html)，学习如何将自定义的 onnx 模型，转换成 AX620 中所用的 Joint 模型。
+
+### 插入后处理代码
+  
 ax-pipeline 的模型推理基本都是比较标准的操作，前处理是不需要用户在代码中配置的，所以用户基本只需要关注后处理部分即可，并将目标检测的结果赋值到目标检测的结构体里，ax-pipeline 会自动绘制到输出的图像流中。
 
 ax-pipeline 定义了一了一个后处理的函数 ```sample_run_joint_post_process``` ，位于 [examples/sample_run_joint/sample_run_joint_post_process.cpp](../examples/sample_run_joint/sample_run_joint_post_process.cpp)
