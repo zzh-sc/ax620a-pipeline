@@ -19,6 +19,10 @@
 ### DEMO视频
 https://user-images.githubusercontent.com/46700201/198552009-b55a5776-fc5a-4725-9906-d37548385359.mp4
 
+https://user-images.githubusercontent.com/46700201/199662116-9f5748bd-8565-43ed-af99-c36903f9efdd.mp4
+
+
+
 ## 技术讨论
 - Github issues
 - QQ 群: 139953715
