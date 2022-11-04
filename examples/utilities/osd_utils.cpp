@@ -62,6 +62,7 @@ int putText(char *text, float fontscale, int thickness, osd_utils_img *base, osd
 
     cv::Mat src(out->height, out->width, CV_8UC4, out->data);
     cv::putText(src, text, cv::Point(0, label_size.height), cv::FONT_HERSHEY_SIMPLEX, fontscale, cv::Scalar(255, 0, 0, 255), 2);
+    return 0;
 }
 
 void releaseImg(osd_utils_img *img)

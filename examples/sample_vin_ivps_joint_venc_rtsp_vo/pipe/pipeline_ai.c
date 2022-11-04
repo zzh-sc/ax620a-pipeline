@@ -18,12 +18,20 @@
  * Author: ZHEQIUSHUI
  */
 
-#include "../sample_vin_ivps_joint_venc_rtsp_vo.h"
 #include "../../sample_run_joint/sample_run_joint.h"
+#include "ax_ivps_api.h"
 #include "npu_common.h"
 
+#include "pthread.h"
+#include "sys/prctl.h"
+
+extern volatile AX_S32 gLoopExit;
 extern void *gJointHandle;
 
+extern int SAMPLE_MAJOR_STREAM_WIDTH;
+extern int SAMPLE_MAJOR_STREAM_HEIGHT;
+
+extern pthread_mutex_t g_result_mutex;
 extern sample_run_joint_results pResult_disp;
 
 AX_VOID *GetFrameThread(AX_VOID *pArg)
@@ -75,7 +83,7 @@ AX_VOID *GetFrameThread(AX_VOID *pArg)
             {
                 memcpy(&pResult_disp, &pResult, sizeof(sample_run_joint_results));
 
-                for (AX_U8 i = 0; i < pResult_disp.size && i < SAMPLE_RECT_BOX_COUNT; i++)
+                for (AX_U8 i = 0; i < pResult_disp.size && i < SAMPLE_MAX_BBOX_COUNT; i++)
                 {
                     pResult_disp.objects[i].x /= SAMPLE_MAJOR_STREAM_WIDTH;
                     pResult_disp.objects[i].y /= SAMPLE_MAJOR_STREAM_HEIGHT;
