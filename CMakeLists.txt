@@ -37,9 +37,9 @@ if (NOT BSP_MSP_DIR)
 endif ()
 message(STATUS "BSP_MSP_DIR = ${BSP_MSP_DIR}")
 
-if (YOLOV5_FACE)
-    add_definitions(-DYOLOV5_FACE)
-endif()
+# if (YOLOV5_FACE)
+#     add_definitions(-DYOLOV5_FACE)
+# endif()
 
 add_subdirectory(examples/sample_vin_ivps_joint_venc_rtsp_vo)
 add_subdirectory(examples/sample_vin_ivps_joint_venc_rtsp)

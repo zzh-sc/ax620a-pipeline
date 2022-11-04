@@ -93,17 +93,6 @@ typedef struct _IVPS_REGION_PARAM
     AX_BOOL bExit;
 } IVPS_REGION_PARAM_T, *IVPS_REGION_PARAM_PTR;
 
-typedef struct _sample_RECT_S
-{
-    float fX, fY, fW, fH;
-} SAMPLE_RECT_S;
-
-typedef struct _sample_ALGO_RESULT_S
-{
-    AX_U8 nSize;
-    SAMPLE_RECT_S rect[SAMPLE_RECT_BOX_COUNT];
-} SAMPLE_ALGO_RESULT_S;
-
 static AX_S32 s_sample_framerate = 25;
 
 extern volatile AX_S32 gLoopExit;

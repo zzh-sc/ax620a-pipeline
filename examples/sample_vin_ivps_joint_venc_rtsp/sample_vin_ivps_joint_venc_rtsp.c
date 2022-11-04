@@ -105,7 +105,6 @@ static COMMON_SYS_POOL_CFG_T gtSysCommPoolSingleOs08a20Hdr[] = {
 
 IVPS_REGION_PARAM_T g_arrRgnThreadParam[SAMPLE_REGION_COUNT];
 
-static SAMPLE_ALGO_RESULT_S g_sample_algo_result;
 pthread_mutex_t g_result_mutex;
 
 CAMERA_T gCams[MAX_CAMERAS] = {0};

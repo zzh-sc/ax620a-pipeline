@@ -6,7 +6,9 @@
 
 ### 插入后处理代码
   
-ax-pipeline 的模型推理基本都是比较标准的操作，前处理是不需要用户在代码中配置的，所以用户基本只需要关注后处理部分即可，并将目标检测的结果赋值到目标检测的结构体里，ax-pipeline 会自动绘制到输出的图像流中。
+ax-pipeline 的模型推理基本都是比较标准的操作，前处理是不需要用户在代码中配置的。
+
+用户基本只需要关注后处理部分即可，添加所需变量到结果结构体 ```sample_run_joint_results``` ，并将结果赋值到结果结构体里。
 
 ax-pipeline 定义了一了一个后处理的函数 ```sample_run_joint_post_process``` ，位于 [examples/sample_run_joint/sample_run_joint_post_process.cpp](../examples/sample_run_joint/sample_run_joint_post_process.cpp)
 
@@ -27,3 +29,17 @@ void sample_run_joint_post_process(AX_U32 nOutputSize, AX_JOINT_IOMETA_T *pOutpu
 用户可以将 ax-pipeline 自带的后处理代码进行注释，然后定义自己的后处理的函数，完成自己的模型的后处理。
 
 一些常用模型的后处理代码，可以参考 [ax-samples](https://github.com/AXERA-TECH/ax-samples)
+
+### OSD 
+ax-pipeline 使用 opencv 进行绘图，基本步骤如下
+- 申请与需要 OSD 的目标图像一样大的四通道图片
+- 在申请的四通道中进行绘图，不需要绘图的区域保持通道透明
+- 通过 IVPS 将申请的四通道图片，覆盖到需要 OSD 的目标图像上
+  
+所以，用户可以自定义绘图算子，绘制任意内容到上述的四通道图像中，绘图的具体操作可参考以下代码文件：
+- [examples/sample_vin_ivps_joint_venc_rtsp/pipe/pipeline_osd.c](../examples/sample_vin_ivps_joint_venc_rtsp/pipe/pipeline_osd.c) RgnThreadFunc_V2 函数
+- [examples/utilities/osd_utils.cpp](../examples/utilities/osd_utils.cpp) drawObjs 函数
+
+OSD 超出图像范围的内容会丢失，请注意绘图时 ```坐标、mask``` 是否超出了图像范围，如下图所示：
+
+![](docs/../OSD.png)

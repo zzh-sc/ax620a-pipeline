@@ -23,48 +23,50 @@ ax-pipeline 的源码编译目前有两种实现路径：
 1、git clone 下载源码，进入 ax-pipeline 根目录
 
 ```bash
-$ git clone --recursive https://github.com/AXERA-TECH/ax-pipeline.git
+$ git clone https://github.com/AXERA-TECH/ax-pipeline.git
 $ cd ax-pipeline
 ```
-2、创建 3rdparty，下载opencv
+2、下载子模块（主要是 [axpi_bsp_sdk](https://github.com/sipeed/axpi_bsp_sdk) 部分，如果已经单独下载，可直接放到本目录下，并跳过本步骤）
+```
+$ git submodule update —init
+```
+3、创建 3rdparty，下载opencv
 ```
 $ mkdir 3rdparty
 $ cd 3rdparty
 $ wget https://github.com/AXERA-TECH/ax-samples/releases/download/v0.1/opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
 $ unzip opencv-arm-linux-gnueabihf-gcc-7.5.0.zip
 ```
-3、下载并配置交叉编译工具链（如果已经配置并确定可用，这一部分可以跳过）
+4、下载并配置交叉编译工具链（如果已经配置并确定可用，这一部分可以跳过）
 ```
 $ wget http://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
 $ tar -xvf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
 $ export PATH=$PATH:$PWD/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/
 ```
-4、创建 build 目录，并创建 cmake 编译任务
+5、创建 build 目录，并创建 cmake 编译任务
 ```
 $ cd ..
 $ mkdir build
 $ cd build
-```
-示例默认推理是 yolov5 
-```
 $ cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm-linux-gnueabihf.toolchain.cmake -DCMAKE_INSTALL_PREFIX=install ..
-```
-也可以添加 ```-DYOLOV5_FACE=1``` 参数，将 AI任务 修改为人脸检测任务
-```
-$ cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm-linux-gnueabihf.toolchain.cmake -DCMAKE_INSTALL_PREFIX=install -DYOLOV5_FACE=1 ..
-```
-```
 $ make -j8
 $ make install
 ```
 
-5、编译完成后，生成的可执行示例存放在 `ax-pipeline/build/install/bin/` 路径下：
+6、编译完成后，生成的可执行示例存放在 `ax-pipeline/build/install/bin/` 路径下：
 
 ```bash
 ax-pipeline/build$ tree install
 install
 └── bin
+    ├── config
+    │   ├── yolov5s.json
+    │   ├── yolov5s_face.json
+    │   ├── yolov5s_face_nv12_11.sha1sum
+    │   └── yolov5s_sub_nv12_11.sha1sum
+    ├── libax_rtsp.so
     ├── sample_vin_ivps_joint_venc_rtsp
     ├── sample_vin_ivps_joint_venc_rtsp_vo
+    ├── sample_vin_ivps_joint_vo
     └── sample_vin_joint
 ```

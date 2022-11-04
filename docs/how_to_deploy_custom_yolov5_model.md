@@ -3,7 +3,7 @@
 ### 如何将自己训练的模型转换成 AX620 所用的 Joint 模型
 - 阅读知乎文章 [爱芯元智AX620A部署yolov5 6.0模型实录](https://zhuanlan.zhihu.com/p/569083585)
 - 根据上述文章，搭建模型转换的环境，修改模型结构
-- 量化数据集请自行下载 coco dataset，从中随机提取一千张图片打包成 tar 文件
+- 量化数据集请自行下载 coco dataset，从中随机提取一千张图片打包成 tar 文件，或者从训练的测试集抽一千张图片进行打包
 - 文章中提及的 ```yolov5s.prototxt``` 文件，需要将
 ```
 dst_input_tensors {
