@@ -44,16 +44,7 @@ $ export PATH=$PATH:$PWD/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin
 $ cd ..
 $ mkdir build
 $ cd build
-```
-示例默认推理是 yolov5 
-```
 $ cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm-linux-gnueabihf.toolchain.cmake -DCMAKE_INSTALL_PREFIX=install ..
-```
-也可以添加 ```-DYOLOV5_FACE=1``` 参数，将 AI任务 修改为人脸检测任务
-```
-$ cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/arm-linux-gnueabihf.toolchain.cmake -DCMAKE_INSTALL_PREFIX=install -DYOLOV5_FACE=1 ..
-```
-```
 $ make -j8
 $ make install
 ```
