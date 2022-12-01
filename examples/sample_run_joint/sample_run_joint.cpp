@@ -367,12 +367,7 @@ int sample_run_joint_inference(void *yhandle, const void *_pstFrame, const void 
     }
 
     AX_NPU_CV_Image *pstFrame = (AX_NPU_CV_Image *)_pstFrame;
-    // check eImgType
-    // if (handle->algo_input.eDtype != pstFrame->eDtype)
-    // {
-    //     ALOGE("color format must same,got (user input)%d:(model input)%d", pstFrame->eDtype, handle->algo_input.eDtype);
-    //     return -1;
-    // }
+
     AX_NPU_SDK_EX_MODEL_TYPE_T ModelType;
     AX_JOINT_GetVNPUMode(handle->joint_handle, &ModelType);
     switch (pstFrame->eDtype)
@@ -411,6 +406,9 @@ int sample_run_joint_inference(void *yhandle, const void *_pstFrame, const void 
         default:
             break;
         }
+        handle->joint_io_arr.pInputs->phyAddr = (AX_ADDR)handle->algo_input_nv12.pPhy;
+        handle->joint_io_arr.pInputs->pVirAddr = (AX_VOID *)handle->algo_input_nv12.pVir;
+        handle->joint_io_arr.pInputs->nSize = (AX_U32)handle->algo_input_nv12.nSize;
     }
     break;
     case AX_JOINT_CS_RGB:
@@ -428,6 +426,9 @@ int sample_run_joint_inference(void *yhandle, const void *_pstFrame, const void 
         default:
             break;
         }
+        handle->joint_io_arr.pInputs->phyAddr = (AX_ADDR)handle->algo_input_rgb.pPhy;
+        handle->joint_io_arr.pInputs->pVirAddr = (AX_VOID *)handle->algo_input_rgb.pVir;
+        handle->joint_io_arr.pInputs->nSize = (AX_U32)handle->algo_input_rgb.nSize;
     }
     break;
     case AX_JOINT_CS_BGR:
@@ -445,6 +446,9 @@ int sample_run_joint_inference(void *yhandle, const void *_pstFrame, const void 
         default:
             break;
         }
+        handle->joint_io_arr.pInputs->phyAddr = (AX_ADDR)handle->algo_input_bgr.pPhy;
+        handle->joint_io_arr.pInputs->pVirAddr = (AX_VOID *)handle->algo_input_bgr.pVir;
+        handle->joint_io_arr.pInputs->nSize = (AX_U32)handle->algo_input_bgr.nSize;
     }
     break;
     default:
