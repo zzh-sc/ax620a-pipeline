@@ -25,7 +25,7 @@
 
 IVPS_REGION_PARAM_T g_arrRgnThreadParam[SAMPLE_REGION_COUNT];
 
-AX_S32 s_sample_framerate = 25;
+AX_S32 s_sample_framerate = 60;
 
 CAMERA_T gCams[MAX_CAMERAS] = {0};
 
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
             s_sample_framerate = (AX_S32)atoi(optarg);
             if (s_sample_framerate <= 0)
             {
-                s_sample_framerate = 25;
+                s_sample_framerate = 60;
             }
             break;
         case 'h':
@@ -324,11 +324,6 @@ int main(int argc, char *argv[])
         goto EXIT_2;
     }
 
-    /*
-        joint 模型初始化会设置 SAMPLE_ALGO_WIDTH/SAMPLE_ALGO_HEIGHT 两个值，这两个值会用作后续设置 IVPS 的 AI 图像通道
-        现在默认 IVPS 输出的 AI 图像通道，会将图像置中并填充
-        本 SAMPLE 的 AI 只支持 NV12 的输入
-     */
     s32Ret = COMMON_JOINT_Init();
     if (0 != s32Ret)
     {
