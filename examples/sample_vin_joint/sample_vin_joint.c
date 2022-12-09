@@ -644,7 +644,7 @@ int main(int argc, char *argv[])
         goto EXIT;
     }
 
-    s32Ret = COMMON_JOINT_Init();
+    s32Ret = COMMON_JOINT_Init(&gModels, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT);
     if (0 != s32Ret)
     {
         ALOGE("COMMON_JOINT_Init failed,s32Ret:0x%x\n", s32Ret);
@@ -696,7 +696,7 @@ int main(int argc, char *argv[])
     SysRun();
 
 EXIT:
-    COMMON_JOINT_Deinit();
+    COMMON_JOINT_Deinit(&gModels);
     for (i = 0; i < MAX_CAMERAS; i++)
     {
         if (!gCams[i].bOpen)

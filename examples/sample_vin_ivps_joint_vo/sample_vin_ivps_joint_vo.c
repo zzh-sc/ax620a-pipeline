@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 
     ALOGN("eSysCase=%d,eHdrMode=%d\n", eSysCase, eHdrMode);
 
-    s32Ret = COMMON_SET_CAM(eSysCase, eHdrMode, &eSnsType, &tCommonArgs);
+    s32Ret = COMMON_SET_CAM(gCams, eSysCase, eHdrMode, &eSnsType, &tCommonArgs, s_sample_framerate);
     if (s32Ret != 0)
     {
         PrintHelp(argv[0]);
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
         goto EXIT_2;
     }
 
-    s32Ret = COMMON_JOINT_Init();
+    s32Ret = COMMON_JOINT_Init(&gModels, SAMPLE_MAJOR_STREAM_WIDTH, SAMPLE_MAJOR_STREAM_HEIGHT);
     if (0 != s32Ret)
     {
         ALOGE("COMMON_JOINT_Init failed,s32Ret:0x%x\n", s32Ret);
@@ -382,7 +382,7 @@ EXIT_4:
 
 EXIT_3:
     COMMON_CAM_Deinit();
-    COMMON_JOINT_Deinit();
+    COMMON_JOINT_Deinit(&gModels);
 
 EXIT_2:
     SampleLinkDeInit();
