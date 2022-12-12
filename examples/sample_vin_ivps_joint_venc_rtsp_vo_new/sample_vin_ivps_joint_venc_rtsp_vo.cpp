@@ -121,21 +121,24 @@ void *osd_thread(void *)
 
 void ai_inference_func(pipeline_buffer_t *buff)
 {
-    static sample_run_joint_results mResults;
-    AX_NPU_CV_Image tSrcFrame = {0};
+    if (gModels.bRunJoint)
+    {
+        static sample_run_joint_results mResults;
+        AX_NPU_CV_Image tSrcFrame = {0};
 
-    tSrcFrame.eDtype = (AX_NPU_CV_FrameDataType)buff->d_type;
-    tSrcFrame.nWidth = buff->n_width;
-    tSrcFrame.nHeight = buff->n_height;
-    tSrcFrame.pVir = (unsigned char *)buff->p_vir;
-    tSrcFrame.pPhy = buff->p_phy;
-    tSrcFrame.tStride.nW = buff->n_stride;
-    tSrcFrame.nSize = buff->n_size;
+        tSrcFrame.eDtype = (AX_NPU_CV_FrameDataType)buff->d_type;
+        tSrcFrame.nWidth = buff->n_width;
+        tSrcFrame.nHeight = buff->n_height;
+        tSrcFrame.pVir = (unsigned char *)buff->p_vir;
+        tSrcFrame.pPhy = buff->p_phy;
+        tSrcFrame.tStride.nW = buff->n_stride;
+        tSrcFrame.nSize = buff->n_size;
 
-    sample_run_joint_inference_single_func(&gModels, &tSrcFrame, &mResults);
-    pthread_mutex_lock(&g_result_mutex);
-    memcpy(&g_result_disp, &mResults, sizeof(sample_run_joint_results));
-    pthread_mutex_unlock(&g_result_mutex);
+        sample_run_joint_inference_single_func(&gModels, &tSrcFrame, &mResults);
+        pthread_mutex_lock(&g_result_mutex);
+        memcpy(&g_result_disp, &mResults, sizeof(sample_run_joint_results));
+        pthread_mutex_unlock(&g_result_mutex);
+    }
 }
 
 static void *IspRun(void *args)

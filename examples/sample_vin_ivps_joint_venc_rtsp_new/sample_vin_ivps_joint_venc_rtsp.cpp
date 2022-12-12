@@ -121,21 +121,24 @@ void *osd_thread(void *)
 
 void ai_inference_func(pipeline_buffer_t *buff)
 {
-    static sample_run_joint_results mResults;
-    AX_NPU_CV_Image tSrcFrame = {0};
+    if (gModels.bRunJoint)
+    {
+        static sample_run_joint_results mResults;
+        AX_NPU_CV_Image tSrcFrame = {0};
 
-    tSrcFrame.eDtype = (AX_NPU_CV_FrameDataType)buff->d_type;
-    tSrcFrame.nWidth = buff->n_width;
-    tSrcFrame.nHeight = buff->n_height;
-    tSrcFrame.pVir = (unsigned char *)buff->p_vir;
-    tSrcFrame.pPhy = buff->p_phy;
-    tSrcFrame.tStride.nW = buff->n_stride;
-    tSrcFrame.nSize = buff->n_size;
+        tSrcFrame.eDtype = (AX_NPU_CV_FrameDataType)buff->d_type;
+        tSrcFrame.nWidth = buff->n_width;
+        tSrcFrame.nHeight = buff->n_height;
+        tSrcFrame.pVir = (unsigned char *)buff->p_vir;
+        tSrcFrame.pPhy = buff->p_phy;
+        tSrcFrame.tStride.nW = buff->n_stride;
+        tSrcFrame.nSize = buff->n_size;
 
-    sample_run_joint_inference_single_func(&gModels, &tSrcFrame, &mResults);
-    pthread_mutex_lock(&g_result_mutex);
-    memcpy(&g_result_disp, &mResults, sizeof(sample_run_joint_results));
-    pthread_mutex_unlock(&g_result_mutex);
+        sample_run_joint_inference_single_func(&gModels, &tSrcFrame, &mResults);
+        pthread_mutex_lock(&g_result_mutex);
+        memcpy(&g_result_disp, &mResults, sizeof(sample_run_joint_results));
+        pthread_mutex_unlock(&g_result_mutex);
+    }
 }
 
 static void *IspRun(void *args)
@@ -375,8 +378,8 @@ int main(int argc, char *argv[])
         pipe0.enable = 1;
         pipe0.pipeid = 0x90015;
         pipe0.m_input_type = pi_vin;
-        pipe0.m_output_type = po_rtsp_h265; //可以创建265，降低带宽压力
-        pipe0.n_loog_exit = 0; // 可以用来控制线程退出（如果有的话）
+        pipe0.m_output_type = po_rtsp_h265; // 可以创建265，降低带宽压力
+        pipe0.n_loog_exit = 0;              // 可以用来控制线程退出（如果有的话）
         pipe0.n_vin_pipe = 0;
         pipe0.n_vin_chn = 0;
         sprintf(pipe0.m_venc_attr.end_point, "axstream0"); // 重复的会创建失败
