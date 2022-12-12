@@ -123,7 +123,7 @@ static COMMON_SYS_POOL_CFG_T gtSysCommPoolMIPI_YUV[] = {
     {3840, 2160, 3840, AX_FORMAT_BAYER_RAW_16BPP, 40}, /*vin raw16 use */
 };
 
-int COMMON_SET_CAM(COMMON_SYS_CASE_E eSysCase, AX_SNS_HDR_MODE_E eHdrMode, SAMPLE_SNS_TYPE_E *eSnsType, COMMON_SYS_ARGS_T *tCommonArgs)
+int COMMON_SET_CAM(CAMERA_T gCams[MAX_CAMERAS], COMMON_SYS_CASE_E eSysCase, AX_SNS_HDR_MODE_E eHdrMode, SAMPLE_SNS_TYPE_E *eSnsType, COMMON_SYS_ARGS_T *tCommonArgs, int s_sample_framerate)
 {
     if (eSysCase >= SYS_CASE_BUTT || eSysCase <= SYS_CASE_NONE)
     {
