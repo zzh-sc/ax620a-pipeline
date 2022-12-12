@@ -316,27 +316,6 @@ void *_venc_get_frame_thread(void *arg)
 
             switch (pipe->m_output_type)
             {
-            case po_venc_mjpg:
-            case po_venc_h264:
-            case po_venc_h265:
-            {
-                if (pipe->output_func)
-                {
-                    pipeline_buffer_t buf;
-                    buf.pipeid = pipe->pipeid;
-                    buf.m_output_type = pipe->m_output_type;
-                    buf.n_width = 0;
-                    buf.n_height = 0;
-                    buf.n_size = stStream.stPack.u32Len;
-                    buf.n_stride = 0;
-                    buf.d_type = 0;
-                    buf.p_vir = stStream.stPack.pu8Addr;
-                    buf.p_phy = stStream.stPack.ulPhyAddr;
-                    buf.p_pipe = pipe;
-                    pipe->output_func(&buf);
-                }
-            }
-            break;
             case po_rtsp_h264:
             case po_rtsp_h265:
             {
@@ -348,6 +327,22 @@ void *_venc_get_frame_thread(void *arg)
             break;
             default:
                 break;
+            }
+            
+            if (pipe->output_func)
+            {
+                pipeline_buffer_t buf;
+                buf.pipeid = pipe->pipeid;
+                buf.m_output_type = pipe->m_output_type;
+                buf.n_width = 0;
+                buf.n_height = 0;
+                buf.n_size = stStream.stPack.u32Len;
+                buf.n_stride = 0;
+                buf.d_type = 0;
+                buf.p_vir = stStream.stPack.pu8Addr;
+                buf.p_phy = stStream.stPack.ulPhyAddr;
+                buf.p_pipe = pipe;
+                pipe->output_func(&buf);
             }
 
             s32Ret = AX_VENC_ReleaseStream(pipe->m_venc_attr.n_venc_chn, &stStream);
@@ -742,29 +737,29 @@ int _create_ivps_grp(pipeline_t *pipe)
         break;
     }
 
-    if (stPipelineAttr.nOutFifoDepth[nChn] > 0)
+    switch (pipe->m_output_type)
     {
-        pthread_t tid = 0;
-        if (0 != pthread_create(&tid, NULL, _ivps_get_frame_thread, pipe))
+    case po_buff_rgb:
+    case po_buff_bgr:
+    case po_buff_nv12:
+    case po_buff_nv21:
+        if (stPipelineAttr.nOutFifoDepth[nChn] > 0)
         {
-            return -1;
+            pthread_t tid = 0;
+            if (0 != pthread_create(&tid, NULL, _ivps_get_frame_thread, pipe))
+            {
+                return -1;
+            }
+            pthread_detach(tid);
         }
-        pthread_detach(tid);
-    }
-    else
-    {
-        switch (pipe->m_output_type)
+        else
         {
-        case po_buff_rgb:
-        case po_buff_bgr:
-        case po_buff_nv12:
-        case po_buff_nv21:
-            ALOGW("m_output_type set po_buff mode,but pipe->m_ivps_attr.n_fifo_count got %d", pipe->m_ivps_attr.n_fifo_count);
-            break;
 
-        default:
-            break;
+            ALOGW("m_output_type set po_buff mode,but pipe->m_ivps_attr.n_fifo_count got %d", pipe->m_ivps_attr.n_fifo_count);
         }
+        break;
+    default:
+        break;
     }
 
     return 0;
