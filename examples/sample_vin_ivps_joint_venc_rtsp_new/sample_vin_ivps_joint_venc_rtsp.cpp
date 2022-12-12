@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
             canvas.width = pipes_need_osd[i]->m_ivps_attr.n_ivps_width;
             canvas.height = pipes_need_osd[i]->m_ivps_attr.n_ivps_height;
         }
-        if (pipes_need_osd.size())
+        if (pipes_need_osd.size() && gModels.bRunJoint)
         {
             pthread_t osd_tid;
             pthread_create(&osd_tid, NULL, osd_thread, NULL);
