@@ -117,6 +117,7 @@ void *osd_thread(void *)
         // freeObjs(&mResults);
         usleep(0);
     }
+    return NULL;
 }
 
 void ai_inference_func(pipeline_buffer_t *buff)
@@ -138,39 +139,6 @@ void ai_inference_func(pipeline_buffer_t *buff)
         pthread_mutex_lock(&g_result_mutex);
         memcpy(&g_result_disp, &mResults, sizeof(sample_run_joint_results));
         pthread_mutex_unlock(&g_result_mutex);
-    }
-}
-FILE *h265_file_output = NULL;
-void h265_save_func(pipeline_buffer_t *buff)
-{
-    if (!h265_file_output)
-    {
-        // 获取系统时间戳
-        time_t timeReal;
-        time(&timeReal);
-        timeReal = timeReal + 8 * 3600;
-        tm *t = gmtime(&timeReal);
-        char filename[128];
-        sprintf(filename, "%d-%02d-%02d_%02d-%02d-%02d.h265", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
-
-        h265_file_output = fopen(filename, "wb");
-        if (h265_file_output)
-        {
-            ALOGI("start recode to %s", filename);
-        }
-        else
-        {
-            ALOGE("%s open failed", filename);
-        }
-    }
-    if (h265_file_output)
-    {
-        fwrite(buff->p_vir, 1, buff->n_size, h265_file_output);
-        static int cnt = 0;
-        if (cnt++ % 100 == 0)
-        {
-            ALOGI("偷拍中");
-        }
     }
 }
 
@@ -398,39 +366,39 @@ int main(int argc, char *argv[])
 
     pipeline_t pipelines[pipe_count];
     memset(&pipelines[0], 0, sizeof(pipelines));
-    // 创建pipeline
     {
-        int pipeidx = 0;
-        pipeline_t &pipe0 = pipelines[pipeidx];
+
+        pipeline_t &pipe0 = pipelines[0];
         {
-            pipeline_ivps_config_t &config = pipe0.m_ivps_attr;
-            config.n_ivps_grp = pipeidx; // 重复的会创建失败
-            config.n_ivps_fps = 60;      // 屏幕只能是60gps
-            config.n_ivps_rotate = 1;    // 旋转
-            config.n_ivps_width = 854;
-            config.n_ivps_height = 480;
-            config.n_osd_rgn = 1; // osd rgn 的个数，一个rgn可以osd 32个目标
+            pipeline_ivps_config_t &config0 = pipe0.m_ivps_attr;
+            config0.n_ivps_grp = 0;
+            config0.n_ivps_fps = s_sample_framerate;
+            config0.n_ivps_width = 1920;
+            config0.n_ivps_height = 1080;
+            config0.n_osd_rgn = 1; // osd rgn 的个数（最多五个），一个rgn可以osd 32个目标，现在用的是自定义的rgba画布，所以指挥占用一个rgn里的一个目标，所以这里只创建一个
         }
         pipe0.enable = 1;
-        pipe0.pipeid = pipeidx++;
+        pipe0.pipeid = 0x90015;
         pipe0.m_input_type = pi_vin;
-        pipe0.m_output_type = po_vo_sipeed_maix3_screen;
-        pipe0.n_loog_exit = 0; // 可以用来控制线程退出（如果有的话）
+        pipe0.m_output_type = po_rtsp_h265; // 可以创建265，降低带宽压力
+        pipe0.n_loog_exit = 0;              // 可以用来控制线程退出（如果有的话）
         pipe0.n_vin_pipe = 0;
         pipe0.n_vin_chn = 0;
+        sprintf(pipe0.m_venc_attr.end_point, "axstream0"); // 重复的会创建失败
+        pipe0.m_venc_attr.n_venc_chn = 0;                  // 重复的会创建失败
 
-        pipeline_t &pipe1 = pipelines[pipeidx];
+        pipeline_t &pipe1 = pipelines[1];
         {
-            pipeline_ivps_config_t &config = pipe1.m_ivps_attr;
-            config.n_ivps_grp = pipeidx; // 重复的会创建失败
-            config.n_ivps_fps = 60;
-            config.n_ivps_width = gModels.SAMPLE_IVPS_ALGO_WIDTH;
-            config.n_ivps_height = gModels.SAMPLE_IVPS_ALGO_HEIGHT;
-            config.b_letterbox = 1;
-            config.n_fifo_count = 1; // 如果想要拿到数据并输出到回调 就设为1~4
+            pipeline_ivps_config_t &config1 = pipe1.m_ivps_attr;
+            config1.n_ivps_grp = 1; // 重复的会创建失败
+            config1.n_ivps_fps = 60;
+            config1.n_ivps_width = gModels.SAMPLE_IVPS_ALGO_WIDTH;
+            config1.n_ivps_height = gModels.SAMPLE_IVPS_ALGO_HEIGHT;
+            config1.b_letterbox = 1;
+            config1.n_fifo_count = 1; // 如果想要拿到数据并输出到回调 就设为1~4
         }
         pipe1.enable = 1;
-        pipe1.pipeid = pipeidx++;
+        pipe1.pipeid = 0x90016;
         pipe1.m_input_type = pi_vin;
         switch (gModels.SAMPLE_ALGO_FORMAT)
         {
@@ -450,36 +418,34 @@ int main(int argc, char *argv[])
         pipe1.n_vin_chn = 0;
         pipe1.output_func = ai_inference_func; // 图像输出的回调函数
 
-        pipeline_t &pipe2 = pipelines[pipeidx];
+        pipeline_t &pipe2 = pipelines[2];
         {
-            pipeline_ivps_config_t &config = pipe2.m_ivps_attr;
-            config.n_ivps_grp = pipeidx; // 重复的会创建失败
-            config.n_ivps_fps = 25;
-            config.n_ivps_width = 960;
-            config.n_ivps_height = 540;
-            config.n_osd_rgn = 1;
-            config.n_fifo_count = 1; // 如果想要拿到数据并输出到回调 就设为1~4
+            pipeline_ivps_config_t &config2 = pipe2.m_ivps_attr;
+            config2.n_ivps_grp = 2;    // 重复的会创建失败
+            config2.n_ivps_rotate = 1; // 旋转90度，现在rtsp流是竖着的画面了
+            config2.n_ivps_fps = s_sample_framerate;
+            config2.n_ivps_width = 960;
+            config2.n_ivps_height = 540;
+            config2.n_osd_rgn = 1;
         }
         pipe2.enable = 1;
-        pipe2.pipeid = pipeidx++;
+        pipe2.pipeid = 0x90017; // 重复的会创建失败
         pipe2.m_input_type = pi_vin;
-        pipe2.m_output_type = po_venc_h265;
+        pipe2.m_output_type = po_rtsp_h264;
         pipe2.n_loog_exit = 0;
         pipe2.n_vin_pipe = 0;
         pipe2.n_vin_chn = 0;
-        pipe2.m_venc_attr.n_venc_chn = 0;
-        pipe2.output_func = h265_save_func; // 图像输出的回调函数
+        sprintf(pipe2.m_venc_attr.end_point, "axstream1"); // 重复的会创建失败
+        pipe2.m_venc_attr.n_venc_chn = 1;                  // 重复的会创建失败
 
         for (size_t i = 0; i < pipe_count; i++)
         {
-            ALOGN("create pipe-%d",pipelines[i].pipeid);
             create_pipeline(&pipelines[i]);
             if (pipelines[i].m_ivps_attr.n_osd_rgn > 0)
             {
                 pipes_need_osd.push_back(&pipelines[i]);
             }
         }
-
         for (size_t i = 0; i < pipes_need_osd.size(); i++)
         {
             pipes_osd_canvas[pipes_need_osd[i]->pipeid];
@@ -517,12 +483,6 @@ int main(int argc, char *argv[])
         for (size_t i = 0; i < pipe_count; i++)
         {
             destory_pipeline(&pipelines[i]);
-        }
-        if (h265_file_output)
-        {
-            ALOGI("stop recode");
-            fclose(h265_file_output);
-            h265_file_output = NULL;
         }
     }
 
