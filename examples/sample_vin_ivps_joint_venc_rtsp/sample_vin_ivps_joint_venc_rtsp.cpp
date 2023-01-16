@@ -56,8 +56,6 @@ static struct _g_sample_
     libaxdl_results_t g_result_disp;
     pthread_t osd_tid;
     std::vector<pipeline_t *> pipes_need_osd;
-    std::map<int, libaxdl_canvas_t> pipes_osd_canvas;
-    std::map<int, AX_IVPS_RGN_DISP_GROUP_S> pipes_osd_struct;
     void Init()
     {
         memset(gCams, 0, sizeof(gCams));
@@ -71,8 +69,6 @@ static struct _g_sample_
     void Deinit()
     {
         pipes_need_osd.clear();
-        pipes_osd_canvas.clear();
-        pipes_osd_struct.clear();
         pthread_mutex_destroy(&g_result_mutex);
         ALOGN("g_sample Deinit\n");
     }
@@ -80,6 +76,20 @@ static struct _g_sample_
 
 void *osd_thread(void *)
 {
+    std::map<int, libaxdl_canvas_t> pipes_osd_canvas;
+    std::map<int, AX_IVPS_RGN_DISP_GROUP_S> pipes_osd_struct;
+    for (size_t i = 0; i < g_sample.pipes_need_osd.size(); i++)
+    {
+        pipes_osd_canvas[g_sample.pipes_need_osd[i]->pipeid];
+        pipes_osd_struct[g_sample.pipes_need_osd[i]->pipeid];
+        auto &canvas = pipes_osd_canvas[g_sample.pipes_need_osd[i]->pipeid];
+        auto &tDisp = pipes_osd_struct[g_sample.pipes_need_osd[i]->pipeid];
+        memset(&tDisp, 0, sizeof(AX_IVPS_RGN_DISP_GROUP_S));
+        canvas.channel = 4;
+        canvas.data = (unsigned char *)malloc(g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_width * g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_height * 4);
+        canvas.width = g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_width;
+        canvas.height = g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_height;
+    }
     libaxdl_results_t mResults;
     while (!gLoopExit)
     {
@@ -91,8 +101,8 @@ void *osd_thread(void *)
             auto &osd_pipe = g_sample.pipes_need_osd[i];
             if (osd_pipe && osd_pipe->m_ivps_attr.n_osd_rgn)
             {
-                libaxdl_canvas_t &img_overlay = g_sample.pipes_osd_canvas[osd_pipe->pipeid];
-                AX_IVPS_RGN_DISP_GROUP_S &tDisp = g_sample.pipes_osd_struct[osd_pipe->pipeid];
+                libaxdl_canvas_t &img_overlay = pipes_osd_canvas[osd_pipe->pipeid];
+                AX_IVPS_RGN_DISP_GROUP_S &tDisp = pipes_osd_struct[osd_pipe->pipeid];
 
                 memset(img_overlay.data, 0, img_overlay.width * img_overlay.height * img_overlay.channel);
 
@@ -137,6 +147,12 @@ void *osd_thread(void *)
         }
         // freeObjs(&mResults);
         usleep(0);
+    }
+
+    for (size_t i = 0; i < g_sample.pipes_need_osd.size(); i++)
+    {
+        auto &canvas = pipes_osd_canvas[g_sample.pipes_need_osd[i]->pipeid];
+        free(canvas.data);
     }
     return NULL;
 }
@@ -244,7 +260,6 @@ static AX_VOID PrintHelp(char *testApp)
     exit(0);
 }
 
-// int unit_test(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     optind = 0;
@@ -457,18 +472,6 @@ int main(int argc, char *argv[])
             }
         }
 
-        for (size_t i = 0; i < g_sample.pipes_need_osd.size(); i++)
-        {
-            g_sample.pipes_osd_canvas[g_sample.pipes_need_osd[i]->pipeid];
-            g_sample.pipes_osd_struct[g_sample.pipes_need_osd[i]->pipeid];
-            auto &canvas = g_sample.pipes_osd_canvas[g_sample.pipes_need_osd[i]->pipeid];
-            auto &tDisp = g_sample.pipes_osd_struct[g_sample.pipes_need_osd[i]->pipeid];
-            memset(&tDisp, 0, sizeof(AX_IVPS_RGN_DISP_GROUP_S));
-            canvas.channel = 4;
-            canvas.data = (unsigned char *)malloc(g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_width * g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_height * 4);
-            canvas.width = g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_width;
-            canvas.height = g_sample.pipes_need_osd[i]->m_ivps_attr.n_ivps_height;
-        }
         if (g_sample.pipes_need_osd.size() && g_sample.bRunJoint)
         {
             pthread_create(&g_sample.osd_tid, NULL, osd_thread, NULL);
@@ -481,10 +484,10 @@ int main(int argc, char *argv[])
         ALOGE("SysRun error,s32Ret:0x%x\n", s32Ret);
         goto EXIT_6;
     }
-    gLoopExit = 1;
 
     // 销毁pipeline
     {
+        gLoopExit = 1;
         if (g_sample.pipes_need_osd.size() && g_sample.bRunJoint)
         {
             //            pthread_cancel(g_sample.osd_tid);
@@ -493,12 +496,6 @@ int main(int argc, char *argv[])
             {
                 ALOGE(" osd_tid exit failed,s32Ret:0x%x\n", s32Ret);
             }
-        }
-
-        for (size_t i = 0; i < g_sample.pipes_need_osd.size(); i++)
-        {
-            auto &canvas = g_sample.pipes_osd_canvas[g_sample.pipes_need_osd[i]->pipeid];
-            free(canvas.data);
         }
 
         for (size_t i = 0; i < pipe_count; i++)
@@ -531,12 +528,3 @@ EXIT_2:
     ALOGN("sample end\n");
     return 0;
 }
-
-// int main(int argc, char *argv[])
-// {
-//     for (int i = 0; i < 5; printf("unit_test %d\r\n", i), i++)
-//     { // TEST CTRL + C LOOP
-//         unit_test(argc, argv);
-//     }
-//     return 0;
-// }
