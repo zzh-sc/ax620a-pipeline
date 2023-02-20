@@ -3,7 +3,8 @@
 
 #include "utilities/object_register.hpp"
 #include "../../utilities/sample_log.h"
-#include "ax_sys_api.h"
+// #include "ax_sys_api.h"
+#include "ax_common_api.h"
 #include "fstream"
 
 #ifndef MIN
@@ -73,7 +74,7 @@ int ax_model_base::get_model_type(void *json_obj, std::string &strModelType)
     return m_model_type;
 }
 
-void ax_model_base::draw_bbox(cv::Mat &image, libaxdl_results_t *results, float fontscale, int thickness, int offset_x, int offset_y)
+void ax_model_base::draw_bbox(cv::Mat &image, axdl_results_t *results, float fontscale, int thickness, int offset_x, int offset_y)
 {
     int x, y;
     cv::Size label_size;
@@ -127,7 +128,7 @@ void ax_model_base::draw_bbox(cv::Mat &image, libaxdl_results_t *results, float 
     }
 }
 
-void ax_model_base::draw_fps(cv::Mat &image, libaxdl_results_t *results, float fontscale, int thickness, int offset_x, int offset_y)
+void ax_model_base::draw_fps(cv::Mat &image, axdl_results_t *results, float fontscale, int thickness, int offset_x, int offset_y)
 {
     sprintf(fps_info, "fps:%02d", results->niFps);
     cv::Size label_size = cv::getTextSize(fps_info, cv::FONT_HERSHEY_SIMPLEX, fontscale * 1.5, thickness * 2, NULL);
@@ -144,24 +145,19 @@ int ax_model_single_base_t::init(void *json_obj)
     update_val(jsondata, "CLASS_NUM", &CLASS_NUM);
     update_val(jsondata, "ANCHORS", &ANCHORS);
     update_val(jsondata, "CLASS_NAMES", &CLASS_NAMES);
-    update_val(jsondata, "MODEL_PATH", &m_model_path);
+    update_val(jsondata, "MODEL_PATH", &MODEL_PATH);
+    update_val(jsondata, "STRIDES", &STRIDES);
 
     std::string strModelType;
     m_model_type = (MODEL_TYPE_E)get_model_type(&jsondata, strModelType);
-    ALOGI("load model %s", m_model_path.c_str());
-    m_runner.reset(new ax_joint_runner_ax620);
-    m_runner->init(m_model_path.c_str());
+    ALOGI("load model %s", MODEL_PATH.c_str());
+    m_runner.reset(new ax_runner_ax620);
+    m_runner->init(MODEL_PATH.c_str());
 
-    if (ANCHORS.size() != 18)
+    int unknown_cls_count = MAX(0, CLASS_NUM - CLASS_NAMES.size());
+    for (int i = 0; i < unknown_cls_count; i++)
     {
-        ALOGE("ANCHORS SIZE MUST BE 18\n");
-        return -1;
-    }
-
-    if (CLASS_NUM != CLASS_NAMES.size())
-    {
-        ALOGE("CLASS_NUM != CLASS_NAMES SIZE(%d:%d)\n", CLASS_NUM, CLASS_NAMES.size());
-        return -1;
+        CLASS_NAMES.push_back("unknown");
     }
     return 0;
 }
@@ -171,18 +167,18 @@ void ax_model_single_base_t::deinit()
     m_runner->deinit();
     if (bMalloc)
     {
-        AX_SYS_MemFree(dstFrame.pPhy, dstFrame.pVir);
+        ax_sys_memfree(dstFrame.pPhy, dstFrame.pVir);
     }
 }
 
-int ax_model_single_base_t::preprocess(const void *srcFrame, ax_joint_runner_box_t *crop_resize_box, libaxdl_results_t *results)
+int ax_model_single_base_t::preprocess(axdl_image_t *srcFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
 {
-    memcpy(&dstFrame, srcFrame, sizeof(AX_NPU_CV_Image));
+    memcpy(&dstFrame, srcFrame, sizeof(axdl_image_t));
     bMalloc = false;
     return 0;
 }
 
-int ax_model_single_base_t::inference(const void *pstFrame, ax_joint_runner_box_t *crop_resize_box, libaxdl_results_t *results)
+int ax_model_single_base_t::inference(axdl_image_t *pstFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
 {
     int ret = preprocess(pstFrame, crop_resize_box, results);
     if (ret != 0)

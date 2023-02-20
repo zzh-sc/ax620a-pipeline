@@ -36,7 +36,7 @@ rtsp_session_handle get_rtsp_session_handle(int pipeid);
 void *_venc_get_frame_thread(void *arg)
 {
     pipeline_t *pipe = (pipeline_t *)arg;
-    AX_S16 syncType = -1;
+    AX_S16 nMilliSec = 200;
     AX_VENC_STREAM_S stStream;
     AX_VENC_RECV_PIC_PARAM_S stRecvParam;
     int s32Ret = AX_VENC_StartRecvFrame(pipe->m_venc_attr.n_venc_chn, &stRecvParam);
@@ -48,7 +48,7 @@ void *_venc_get_frame_thread(void *arg)
 
     while (!pipe->n_loog_exit)
     {
-        s32Ret = AX_VENC_GetStream(pipe->m_venc_attr.n_venc_chn, &stStream, syncType);
+        s32Ret = AX_VENC_GetStream(pipe->m_venc_attr.n_venc_chn, &stStream, nMilliSec);
         // printf("%d\n",stStream.stPack.u32Len);
         if (AX_SUCCESS == s32Ret)
         {
@@ -77,7 +77,7 @@ void *_venc_get_frame_thread(void *arg)
                 buf.n_height = 0;
                 buf.n_size = stStream.stPack.u32Len;
                 buf.n_stride = 0;
-                buf.d_type = 0;
+                buf.d_type = po_none;
                 buf.p_vir = stStream.stPack.pu8Addr;
                 buf.p_phy = stStream.stPack.ulPhyAddr;
                 buf.p_pipe = pipe;
@@ -450,12 +450,10 @@ int _create_venc_chn(pipeline_t *pipe)
         set_jpeg_param(pipe);
     }
 
-    pthread_t tid = 0;
-    if (0 != pthread_create(&tid, NULL, _venc_get_frame_thread, pipe))
+    if (0 != pthread_create(&pipe->m_venc_attr.tid, NULL, _venc_get_frame_thread, pipe))
     {
         return -1;
     }
-    pthread_detach(tid);
 
     return 0;
 }
@@ -463,7 +461,7 @@ int _create_venc_chn(pipeline_t *pipe)
 int _destore_venc_grp(pipeline_t *pipe)
 {
     AX_S32 s32Ret = 0;
-
+    pthread_join(pipe->m_venc_attr.tid, NULL);
     s32Ret = AX_VENC_StopRecvFrame(pipe->m_venc_attr.n_venc_chn);
     if (0 != s32Ret)
     {
