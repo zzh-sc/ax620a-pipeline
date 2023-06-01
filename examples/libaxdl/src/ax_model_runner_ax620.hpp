@@ -1,6 +1,8 @@
+#pragma once
 #include "ax_model_runner.hpp"
 #include "utilities/object_register.hpp"
 
+#ifdef AXERA_TARGET_CHIP_AX620
 class ax_runner_ax620 : public ax_runner_base
 {
 protected:
@@ -17,4 +19,5 @@ public:
 
     int inference(axdl_image_t *pstFrame, const axdl_bbox_t *crop_resize_box) override;
 };
-REGISTER(RUNNER_AX620,ax_runner_ax620)
+REGISTER(RUNNER_AX620, ax_runner_ax620)
+#endif

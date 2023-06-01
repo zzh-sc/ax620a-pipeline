@@ -17,13 +17,12 @@
 /*
  * Author: ZHEQIUSHUI
  */
-
+#ifdef AXERA_TARGET_CHIP_AX620
 #include "ax_interpreter_external_api.h"
 #include "ax_sys_api.h"
 #include "joint.h"
 #include "joint_adv.h"
 #include "npu_cv_kit/ax_npu_imgproc.h"
-#define AXERA_TARGET_CHIP_AX620
 
 #include "utilities/file.hpp"
 #include "middleware/io.hpp"
@@ -428,7 +427,8 @@ int sample_run_joint_inference(void *yhandle, const void *_pstFrame, const void 
         switch (pstFrame->eDtype)
         {
         case AX_NPU_CV_FDT_NV12:
-            AX_NPU_CV_CSC(ModelType, &handle->algo_input_nv12, &handle->algo_input_rgb);
+            AX_NPU_CV_CSC(ModelType, &handle->algo_input_nv12, &handle->algo_input_bgr);
+            AX_NPU_CV_CSC(ModelType, &handle->algo_input_bgr, &handle->algo_input_rgb);
             break;
         case AX_NPU_CV_FDT_RGB:
             break;
@@ -472,3 +472,4 @@ int sample_run_joint_inference(void *yhandle, const void *_pstFrame, const void 
 
     return 0;
 }
+#endif

@@ -32,6 +32,13 @@ struct ax_model_handle_t
 {
     std::shared_ptr<ax_model_base> model = nullptr;
     std::mutex locker;
+
+    int fcnt = 0;
+    int fps = -1;
+    struct timespec ts1
+    {
+        0
+    }, ts2{0};
 };
 
 int axdl_parse_param_init(char *json_file_path, void **pModels)
@@ -60,7 +67,16 @@ int axdl_parse_param_init(char *json_file_path, void **pModels)
     }
 
     ((ax_model_handle_t *)(*pModels))->model.reset(model);
-    return ((ax_model_handle_t *)(*pModels))->model->init(&jsondata);
+    int ret = ((ax_model_handle_t *)(*pModels))->model->init(&jsondata);
+    bool track_enable = ax_model_base::get_track_enable(&jsondata);
+    if (ret == 0 && track_enable)
+    {
+        ALOGI("====================================");
+        ALOGI("========== enable tracker ==========");
+        ALOGI("====================================");
+        ((ax_model_handle_t *)(*pModels))->model->enable_track();
+    }
+    return ret;
 }
 
 void axdl_deinit(void **pModels)
@@ -115,6 +131,16 @@ int axdl_get_ivps_width_height(void *pModels, char *json_file_path, int *width_i
     }
     return 0;
 }
+
+int axdl_set_ivps_width_height(void *pModels, int width_ivps, int height_ivps)
+{
+    if (!(ax_model_handle_t *)(pModels) || !((ax_model_handle_t *)(pModels))->model.get())
+    {
+        return -1;
+    }
+    ((ax_model_handle_t *)pModels)->model->set_det_restore_resolution(width_ivps, height_ivps);
+}
+
 axdl_color_space_e axdl_get_color_space(void *pModels)
 {
     if (!(ax_model_handle_t *)(pModels) || !((ax_model_handle_t *)(pModels))->model.get())
@@ -182,10 +208,11 @@ int axdl_inference(void *pModels, axdl_image_t *pstFrame, axdl_results_t *pResul
     }
 
     {
-        static int fcnt = 0;
-        static int fps = -1;
+        int &fcnt = ((ax_model_handle_t *)pModels)->fcnt;
+        int &fps = ((ax_model_handle_t *)pModels)->fps;
+        struct timespec &ts1 = ((ax_model_handle_t *)pModels)->ts1,
+                        &ts2 = ((ax_model_handle_t *)pModels)->ts2;
         fcnt++;
-        static struct timespec ts1, ts2;
         clock_gettime(CLOCK_MONOTONIC, &ts2);
         if ((ts2.tv_sec * 1000 + ts2.tv_nsec / 1000000) - (ts1.tv_sec * 1000 + ts1.tv_nsec / 1000000) >= 1000)
         {
@@ -217,5 +244,33 @@ int axdl_draw_results(void *pModels, axdl_canvas_t *canvas, axdl_results_t *pRes
     cv::Mat image(canvas->height, canvas->width, CV_8UC4, canvas->data);
 
     ((ax_model_handle_t *)pModels)->model->draw_results(image, pResults, fontscale, thickness, offset_x, offset_y);
+    return 0;
+}
+
+void axdl_native_osd_init(void *pModels, int chn, int chn_width, int chn_height, int max_num_rgn)
+{
+    if (!(ax_model_handle_t *)(pModels) || !((ax_model_handle_t *)(pModels))->model.get())
+    {
+        return;
+    }
+    ((ax_model_handle_t *)pModels)->model->draw_init(chn, chn_width, chn_height, max_num_rgn);
+}
+
+void *axdl_native_osd_get_handle(void *pModels, int chn)
+{
+    if (!(ax_model_handle_t *)(pModels) || !((ax_model_handle_t *)(pModels))->model.get())
+    {
+        return nullptr;
+    }
+    return ((ax_model_handle_t *)pModels)->model->get_drawer(chn).get().data();
+}
+
+int axdl_native_osd_draw_results(void *pModels, int chn, axdl_results_t *pResults, float fontscale, int thickness)
+{
+    if (!(ax_model_handle_t *)(pModels) || !((ax_model_handle_t *)(pModels))->model.get())
+    {
+        return -1;
+    }
+    ((ax_model_handle_t *)pModels)->model->draw_results(chn, pResults, fontscale, thickness);
     return 0;
 }

@@ -31,6 +31,7 @@ extern "C"
         MT_DET_SCRFD,
         MT_DET_YOLOV8,
         MT_DET_YOLOV8_SEG,
+        MT_DET_YOLOV8_POSE_650,
         MT_DET_CROWD_COUNT,
 
         // segmentation
@@ -58,6 +59,7 @@ extern "C"
         RUNNER_UNKNOWN = MT_END,
 
         RUNNER_AX620,
+        RUNNER_AX650,
 
         RUNNER_END
     } RUNNER_TYPE_E;
@@ -69,12 +71,12 @@ extern "C"
 
     typedef struct _point_t
     {
-        float x, y;
+        float x, y, score;
     } axdl_point_t;
 
     typedef struct _mat_t
     {
-        int w, h;
+        int w, h, c, s;
         unsigned char *data;
     } axdl_mat_t;
 
@@ -100,12 +102,14 @@ extern "C"
 
         int label;
         float prob;
+        long track_id;
         char objname[SAMPLE_OBJ_NAME_MAX_LEN];
     } axdl_object_t;
 
     typedef struct _results_t
     {
         int mModelType; // MODEL_TYPE_E
+        int bObjTrack;
         int nObjSize;
         axdl_object_t mObjects[SAMPLE_MAX_BBOX_COUNT];
 
@@ -126,6 +130,7 @@ extern "C"
     typedef struct _canvas_t
     {
         unsigned char *data;
+        unsigned long long dataphy;
         int width, height, channel;
     } axdl_canvas_t;
 
@@ -156,12 +161,16 @@ extern "C"
     void axdl_deinit(void **pModels);
 
     int axdl_get_ivps_width_height(void *pModels, char *json_file_path, int *width_ivps, int *height_ivps);
+    int axdl_set_ivps_width_height(void *pModels, int width_ivps, int height_ivps);
     axdl_color_space_e axdl_get_color_space(void *pModels);
     int axdl_get_model_type(void *pModels);
 
     int axdl_inference(void *pModels, axdl_image_t *pstFrame, axdl_results_t *pResults);
 
     int axdl_draw_results(void *pModels, axdl_canvas_t *canvas, axdl_results_t *pResults, float fontscale, int thickness, int offset_x, int offset_y);
+    void axdl_native_osd_init(void *pModels, int chn, int chn_width, int chn_height, int max_num_rgn);
+    void *axdl_native_osd_get_handle(void *pModels, int chn);
+    int axdl_native_osd_draw_results(void *pModels, int chn, axdl_results_t *pResults, float fontscale, int thickness);
 #ifdef __cplusplus
 }
 #endif

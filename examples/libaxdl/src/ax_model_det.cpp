@@ -2,6 +2,7 @@
 #include "../../utilities/json.hpp"
 
 #include "../../utilities/sample_log.h"
+#include "base/pose.hpp"
 
 #define ANCHOR_SIZE_PER_STRIDE 6
 
@@ -57,11 +58,11 @@ int ax_model_yolov5::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resi
 
 int ax_model_yolov5_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
 {
-    if (mSimpleRingBuffer.size())
+    if (mSimpleRingBuffer.size() == 0)
     {
         mSimpleRingBuffer.resize(MAX_MASK_OBJ_COUNT * SAMPLE_RINGBUFFER_CACHE_COUNT);
     }
-    
+
     std::vector<detection::Object> proposals;
     std::vector<detection::Object> objects;
     int nOutputSize = m_runner->get_num_outputs();
@@ -74,15 +75,26 @@ int ax_model_yolov5_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
     }
 
     float prob_threshold_unsigmoid = -1.0f * (float)std::log((1.0f / PROB_THRESHOLD) - 1.0f);
+#ifdef AXERA_TARGET_CHIP_AX620
+    float *output_ptr[3] = {(float *)pOutputsInfo[0].pVirAddr,
+                            (float *)pOutputsInfo[1].pVirAddr,
+                            (float *)pOutputsInfo[2].pVirAddr};
+    int seg_idx = 3;
+#elif defined(AXERA_TARGET_CHIP_AX650)
+    float *output_ptr[3] = {(float *)pOutputsInfo[0].pVirAddr,
+                            (float *)pOutputsInfo[2].pVirAddr,
+                            (float *)pOutputsInfo[3].pVirAddr};
+    int seg_idx = 1;
+#endif
+
     for (uint32_t i = 0; i < STRIDES.size(); ++i)
     {
         auto &output = pOutputsInfo[i];
-        auto ptr = (float *)output.pVirAddr;
-        generate_proposals_yolov5_seg(STRIDES[i], ptr, PROB_THRESHOLD, proposals, get_algo_width(), get_algo_height(), ANCHORS.data(), prob_threshold_unsigmoid);
+        generate_proposals_yolov5_seg(STRIDES[i], output_ptr[i], PROB_THRESHOLD, proposals, get_algo_width(), get_algo_height(), ANCHORS.data(), prob_threshold_unsigmoid);
     }
     static const int DEFAULT_MASK_PROTO_DIM = 32;
     static const int DEFAULT_MASK_SAMPLE_STRIDE = 4;
-    auto &output = pOutputsInfo[3];
+    auto &output = pOutputsInfo[seg_idx];
     auto ptr = (float *)output.pVirAddr;
     detection::get_out_bbox_mask(proposals, objects, MAX_MASK_OBJ_COUNT, ptr, DEFAULT_MASK_PROTO_DIM, DEFAULT_MASK_SAMPLE_STRIDE, NMS_THRESHOLD,
                                  get_algo_height(), get_algo_width(), HEIGHT_DET_BBOX_RESTORE, WIDTH_DET_BBOX_RESTORE);
@@ -114,6 +126,8 @@ int ax_model_yolov5_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
             results->mObjects[i].mYolov5Mask.data = mask.data;
             results->mObjects[i].mYolov5Mask.w = mask.cols;
             results->mObjects[i].mYolov5Mask.h = mask.rows;
+            results->mObjects[i].mYolov5Mask.c = mask.channels();
+            results->mObjects[i].mYolov5Mask.s = mask.step1();
         }
 
         if (obj.label < (int)CLASS_NAMES.size())
@@ -137,6 +151,10 @@ void ax_model_yolov5_seg::draw_custom(cv::Mat &image, axdl_results_t *results, f
                       results->mObjects[i].bbox.y * image.rows + offset_y,
                       results->mObjects[i].bbox.w * image.cols,
                       results->mObjects[i].bbox.h * image.rows);
+        rect.x = MAX(rect.x, 0);
+        rect.y = MAX(rect.y, 0);
+        rect.width = MIN(image.cols - rect.x - 1, rect.width);
+        rect.height = MIN(image.rows - rect.y - 1, rect.height);
 
         if (results->mObjects[i].bHasMask && results->mObjects[i].mYolov5Mask.data)
         {
@@ -145,7 +163,7 @@ void ax_model_yolov5_seg::draw_custom(cv::Mat &image, axdl_results_t *results, f
             {
                 cv::Mat mask_target;
 
-                cv::resize(mask, mask_target, cv::Size(results->mObjects[i].bbox.w * image.cols, results->mObjects[i].bbox.h * image.rows), 0, 0, cv::INTER_NEAREST);
+                cv::resize(mask, mask_target, cv::Size(rect.width, rect.height), 0, 0, cv::INTER_NEAREST);
 
                 if (results->mObjects[i].label < (int)COCO_COLORS.size())
                 {
@@ -158,6 +176,18 @@ void ax_model_yolov5_seg::draw_custom(cv::Mat &image, axdl_results_t *results, f
             }
         }
     }
+}
+
+void ax_model_yolov5_seg::draw_custom(int chn, axdl_results_t *results, float fontscale, int thickness)
+{
+    for (int i = 0; i < results->nObjSize; i++)
+    {
+        if (results->mObjects[i].bHasMask)
+        {
+            m_drawers[chn].add_mask(&results->mObjects[i].bbox, &results->mObjects[i].mYolov5Mask, COCO_COLORS_ARGB[results->mObjects[i].label]);
+        }
+    }
+    draw_bbox(chn, results, fontscale, thickness);
 }
 
 int ax_model_yolov5_face::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
@@ -233,7 +263,19 @@ void ax_model_yolov5_face::draw_custom(cv::Mat &image, axdl_results_t *results, 
         {
             cv::Point p(results->mObjects[i].landmark[j].x * image.cols + offset_x,
                         results->mObjects[i].landmark[j].y * image.rows + offset_y);
-            cv::circle(image, p, 1, cv::Scalar(255, 0, 0, 255), 2);
+            cv::circle(image, p, 1, cv::Scalar(255, 0, 0, 255), thickness * 2);
+        }
+    }
+}
+
+void ax_model_yolov5_face::draw_custom(int chn, axdl_results_t *results, float fontscale, int thickness)
+{
+    draw_bbox(chn, results, fontscale, thickness);
+    for (int i = 0; i < results->nObjSize; i++)
+    {
+        for (int j = 0; j < results->mObjects[i].nLandmark; j++)
+        {
+            m_drawers[chn].add_point(&results->mObjects[i].landmark[j], {255, 0, 255, 0}, thickness * 2);
         }
     }
 }
@@ -474,6 +516,7 @@ int ax_model_yolov7_face::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop
         {
             results->mObjects[i].landmark[j].x = obj.landmark[j].x;
             results->mObjects[i].landmark[j].y = obj.landmark[j].y;
+            results->mObjects[i].landmark[j].score = obj.kps_feat[j];
         }
         if (obj.label < (int)CLASS_NAMES.size())
         {
@@ -736,9 +779,14 @@ int ax_model_yolopv2::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_res
     results->bYolopv2Mask = 1;
     results->mYolopv2seg.h = da_seg_mask.rows;
     results->mYolopv2seg.w = da_seg_mask.cols;
+    results->mYolopv2seg.c = da_seg_mask.channels();
+    results->mYolopv2seg.s = da_seg_mask.step1();
     results->mYolopv2seg.data = da_seg_mask.data;
+
     results->mYolopv2ll.h = ll_seg_mask.rows;
     results->mYolopv2ll.w = ll_seg_mask.cols;
+    results->mYolopv2ll.c = ll_seg_mask.channels();
+    results->mYolopv2ll.s = ll_seg_mask.step1();
     results->mYolopv2ll.data = ll_seg_mask.data;
     return 0;
 }
@@ -762,6 +810,16 @@ void ax_model_yolopv2::draw_custom(cv::Mat &image, axdl_results_t *results, floa
         image.setTo(cv::Scalar(66, 0, 128, 0), tmp);
     }
     draw_bbox(image, results, fontscale, thickness, offset_x, offset_y);
+}
+
+void ax_model_yolopv2::draw_custom(int chn, axdl_results_t *results, float fontscale, int thickness)
+{
+    if (results->bYolopv2Mask && results->mYolopv2ll.data && results->mYolopv2seg.data)
+    {
+        m_drawers[chn].add_mask(nullptr, &results->mYolopv2seg, {66, 0, 0, 128});
+        m_drawers[chn].add_mask(nullptr, &results->mYolopv2ll, {66, 0, 0, 128});
+    }
+    draw_bbox(chn, results, fontscale, thickness);
 }
 
 int ax_model_yolo_fast_body::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
@@ -1041,7 +1099,7 @@ int ax_model_yolov8::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resi
 
 int ax_model_yolov8_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
 {
-    if (mSimpleRingBuffer.size())
+    if (mSimpleRingBuffer.size() == 0)
     {
         mSimpleRingBuffer.resize(MAX_MASK_OBJ_COUNT * SAMPLE_RINGBUFFER_CACHE_COUNT);
     }
@@ -1096,6 +1154,8 @@ int ax_model_yolov8_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
             results->mObjects[i].mYolov5Mask.data = mask.data;
             results->mObjects[i].mYolov5Mask.w = mask.cols;
             results->mObjects[i].mYolov5Mask.h = mask.rows;
+            results->mObjects[i].mYolov5Mask.c = mask.channels();
+            results->mObjects[i].mYolov5Mask.s = mask.step1();
         }
 
         if (obj.label < (int)CLASS_NAMES.size())
@@ -1108,4 +1168,196 @@ int ax_model_yolov8_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
         }
     }
     return 0;
+}
+
+int ax_model_yolov8_pose_650::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
+{
+    if (mSimpleRingBuffer.size() == 0)
+    {
+        mSimpleRingBuffer.resize(SAMPLE_RINGBUFFER_CACHE_COUNT * SAMPLE_MAX_BBOX_COUNT);
+    }
+
+    std::vector<detection::Object> proposals;
+    std::vector<detection::Object> objects;
+
+    if (!grids.size())
+    {
+        for (size_t i = 0; i < 3; i++)
+        {
+            int32_t stride = (1 << i) * 8;
+            int feat_w = get_algo_width() / stride;
+            int feat_h = get_algo_height() / stride;
+            for (int h = 0; h <= feat_h - 1; h++)
+            {
+                for (int w = 0; w <= feat_w - 1; w++)
+                {
+                    float pb_cx = (w + 0.5f);
+                    float pb_cy = (h + 0.5f);
+                    grids.push_back({pb_cx, pb_cy, float(stride), float(w), float(h)});
+                }
+            }
+        }
+    }
+
+    float *output_prob = (float *)m_runner->get_output(0).pVirAddr;
+    float *output_bbox = (float *)m_runner->get_output(3).pVirAddr;
+    float *output_pose_prob = (float *)m_runner->get_output(2).pVirAddr;
+    float *output_pose = (float *)m_runner->get_output(1).pVirAddr;
+
+    for (size_t i = 0; i < grids.size(); i++)
+    {
+        int maxid = -1;
+        float maxval = -FLT_MAX;
+        for (size_t j = 0; j < CLASS_NUM; j++)
+        {
+            if (output_prob[j] > maxval)
+            {
+                maxval = output_prob[j];
+                maxid = j;
+            }
+        }
+
+        if (maxval > PROB_THRESHOLD)
+        {
+            auto grid = grids[i];
+            detection::Object obj;
+            obj.label = maxid;
+            obj.prob = maxval;
+            float x0 = grid[0] - output_bbox[0];
+            float y0 = grid[1] - output_bbox[1];
+            float x1 = grid[0] + output_bbox[2];
+            float y1 = grid[1] + output_bbox[3];
+            float cx = ((x0 + x1) / 2) * grid[2];
+            float cy = ((y0 + y1) / 2) * grid[2];
+            float width = (x1 - x0) * grid[2];
+            float height = (y1 - y0) * grid[2];
+
+            obj.rect.x = cx - width / 2;
+            obj.rect.y = cy - height / 2;
+            obj.rect.width = width;
+            obj.rect.height = height;
+
+            for (size_t k = 0; k < SAMPLE_BODY_LMK_SIZE; k++)
+            {
+                float xp = output_pose[2 * k] * 2;
+                float yp = output_pose[2 * k + 1] * 2;
+                float prob = output_pose_prob[k];
+                xp += grid[3];
+                yp += grid[4];
+                xp *= grid[2];
+                yp *= grid[2];
+                obj.kps_feat.push_back(xp);
+                obj.kps_feat.push_back(yp);
+                obj.kps_feat.push_back(prob);
+            }
+
+            proposals.push_back(obj);
+        }
+
+        output_prob += CLASS_NUM;
+        output_bbox += 4;
+        output_pose_prob += SAMPLE_BODY_LMK_SIZE;
+        output_pose += SAMPLE_BODY_LMK_SIZE * 2;
+    }
+
+    detection::get_out_bbox_kps(proposals, objects, NMS_THRESHOLD, get_algo_height(), get_algo_width(), HEIGHT_DET_BBOX_RESTORE, WIDTH_DET_BBOX_RESTORE);
+
+    results->nObjSize = MIN(objects.size(), SAMPLE_MAX_BBOX_COUNT);
+    for (int i = 0; i < results->nObjSize; i++)
+    {
+        const detection::Object &obj = objects[i];
+        results->mObjects[i].bbox.x = obj.rect.x;
+        results->mObjects[i].bbox.y = obj.rect.y;
+        results->mObjects[i].bbox.w = obj.rect.width;
+        results->mObjects[i].bbox.h = obj.rect.height;
+        results->mObjects[i].label = obj.label;
+        results->mObjects[i].prob = obj.prob;
+        results->mObjects[i].nLandmark = SAMPLE_BODY_LMK_SIZE;
+        std::vector<axdl_point_t> &points = mSimpleRingBuffer.next();
+        points.resize(results->mObjects[i].nLandmark);
+        results->mObjects[i].landmark = points.data();
+        for (size_t j = 0; j < SAMPLE_BODY_LMK_SIZE; j++)
+        {
+            results->mObjects[i].landmark[j].x = obj.kps_feat[3 * j];
+            results->mObjects[i].landmark[j].y = obj.kps_feat[3 * j + 1];
+            results->mObjects[i].landmark[j].score = obj.kps_feat[3 * j + 2];
+        }
+
+        if (obj.label < (int)CLASS_NAMES.size())
+        {
+            strcpy(results->mObjects[i].objname, CLASS_NAMES[obj.label].c_str());
+        }
+        else
+        {
+            strcpy(results->mObjects[i].objname, "unknown");
+        }
+    }
+
+    return 0;
+}
+
+void draw_pose_result(cv::Mat &img, axdl_object_t *pObj, std::vector<pose::skeleton> &pairs, int joints_num, int offset_x, int offset_y);
+
+void ax_model_yolov8_pose_650::draw_custom(cv::Mat &image, axdl_results_t *results, float fontscale, int thickness, int offset_x, int offset_y)
+{
+    draw_bbox(image, results, fontscale, thickness, offset_x, offset_y);
+    for (int i = 0; i < results->nObjSize; i++)
+    {
+        static std::vector<pose::skeleton> pairs = {{15, 13, 0},
+                                                    {13, 11, 1},
+                                                    {16, 14, 2},
+                                                    {14, 12, 3},
+                                                    {11, 12, 0},
+                                                    {5, 11, 1},
+                                                    {6, 12, 2},
+                                                    {5, 6, 3},
+                                                    {5, 7, 0},
+                                                    {6, 8, 1},
+                                                    {7, 9, 2},
+                                                    {8, 10, 3},
+                                                    {1, 2, 0},
+                                                    {0, 1, 1},
+                                                    {0, 2, 2},
+                                                    {1, 3, 3},
+                                                    {2, 4, 0},
+                                                    {0, 5, 1},
+                                                    {0, 6, 2}};
+        if (results->mObjects[i].nLandmark == SAMPLE_BODY_LMK_SIZE)
+        {
+            draw_pose_result(image, &results->mObjects[i], pairs, SAMPLE_BODY_LMK_SIZE, offset_x, offset_y);
+        }
+    }
+}
+
+void ax_model_yolov8_pose_650::draw_custom(int chn, axdl_results_t *results, float fontscale, int thickness)
+{
+    draw_bbox(chn, results, fontscale, thickness);
+    static std::vector<int> head{4, 2, 0, 1, 3};
+    static std::vector<int> hand_arm{10, 8, 6, 5, 7, 9};
+    static std::vector<int> leg{16, 14, 12, 6, 12, 11, 5, 11, 13, 15};
+    std::vector<axdl_point_t> pts(leg.size());
+    for (size_t d = 0; d < results->nObjSize; d++)
+    {
+        if (results->mObjects[d].nLandmark == SAMPLE_BODY_LMK_SIZE)
+        {
+            for (size_t k = 0; k < head.size(); k++)
+            {
+                pts[k].x = results->mObjects[d].landmark[head[k]].x;
+                pts[k].y = results->mObjects[d].landmark[head[k]].y;
+            }
+            m_drawers[chn].add_line(pts.data(), head.size(), {255, 0, 255, 0}, thickness);
+            for (size_t k = 0; k < hand_arm.size(); k++)
+            {
+                pts[k].x = results->mObjects[d].landmark[hand_arm[k]].x;
+                pts[k].y = results->mObjects[d].landmark[hand_arm[k]].y;
+            }
+            m_drawers[chn].add_line(pts.data(), hand_arm.size(), {255, 0, 0, 255}, thickness);
+            for (size_t k = 0; k < leg.size(); k++)
+            {
+                pts[k].x = results->mObjects[d].landmark[leg[k]].x;
+                pts[k].y = results->mObjects[d].landmark[leg[k]].y;
+            }
+            m_drawers[chn].add_line(pts.data(), leg.size(), {255, 255, 0, 0}, thickness);
+        }
+    }
 }

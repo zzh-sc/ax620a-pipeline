@@ -120,6 +120,7 @@ int ax_model_pose_hrnet_sub::post_process(axdl_image_t *pstFrame, axdl_bbox_t *c
         {
             results->mObjects[cur_idx].landmark[i].x = ai_point_result.keypoints[i].x;
             results->mObjects[cur_idx].landmark[i].y = ai_point_result.keypoints[i].y;
+            results->mObjects[cur_idx].landmark[i].score = ai_point_result.keypoints[i].score;
             /*
             [x`]   [m00,m01,m02]   [x]   [m00*x + m01*y + m02]
             [y`] = [m10,m11,m12] * [y] = [m10*x + m11*y + m12]
@@ -208,6 +209,7 @@ int ax_model_pose_hrnet_animal_sub::post_process(axdl_image_t *pstFrame, axdl_bb
         {
             results->mObjects[cur_idx].landmark[i].x = ai_point_result.keypoints[i].x;
             results->mObjects[cur_idx].landmark[i].y = ai_point_result.keypoints[i].y;
+            results->mObjects[cur_idx].landmark[i].score = ai_point_result.keypoints[i].score;
             /*
             [x`]   [m00,m01,m02]   [x]   [m00*x + m01*y + m02]
             [y`] = [m10,m11,m12] * [y] = [m10*x + m11*y + m12]
@@ -305,6 +307,7 @@ int ax_model_pose_hand_sub::post_process(axdl_image_t *pstFrame, axdl_bbox_t *cr
     {
         results->mObjects[cur_idx].landmark[i].x = ai_hand_point_result.keypoints[i].x;
         results->mObjects[cur_idx].landmark[i].y = ai_hand_point_result.keypoints[i].y;
+        results->mObjects[cur_idx].landmark[i].score = ai_hand_point_result.keypoints[i].score;
         /*
         [x`]   [m00,m01,m02]   [x]   [m00*x + m01*y + m02]
         [y`] = [m10,m11,m12] * [y] = [m10*x + m11*y + m12]
@@ -353,6 +356,8 @@ int ax_model_face_feat_extactor_sub::post_process(axdl_image_t *pstFrame, axdl_b
     _normalize(feat.data(), FACE_FEAT_LEN);
     results->mObjects[cur_idx].mFaceFeat.w = FACE_FEAT_LEN * 4;
     results->mObjects[cur_idx].mFaceFeat.h = 1;
+    results->mObjects[cur_idx].mFaceFeat.c = 1;
+    results->mObjects[cur_idx].mFaceFeat.s = results->mObjects[cur_idx].mFaceFeat.w;
     results->mObjects[cur_idx].mFaceFeat.data = (unsigned char *)feat.data();
     return 0;
 }
