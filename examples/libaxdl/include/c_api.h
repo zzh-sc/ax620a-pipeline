@@ -31,12 +31,14 @@ extern "C"
         MT_DET_SCRFD,
         MT_DET_YOLOV8,
         MT_DET_YOLOV8_SEG,
+        MT_DET_YOLOV8_POSE,
         MT_DET_YOLOV8_POSE_650,
         MT_DET_CROWD_COUNT,
 
         // segmentation
         MT_SEG = 0x20000,
         MT_SEG_PPHUMSEG,
+        MT_SEG_DINOV2,
 
         // instance segmentation
         MT_INSEG = 0x30000,
