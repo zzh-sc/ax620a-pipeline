@@ -25,7 +25,7 @@
 
 #include "../utilities/sample_log.h"
 
-#include "../../third-party/mp4demux/Mp4Demuxer.h"
+#include "../common/video_demux.hpp"
 
 #include "ax_ivps_api.h"
 
@@ -70,8 +70,6 @@ static struct _g_sample_
     }
 } g_sample;
 
-
-
 void ai_inference_func(pipeline_buffer_t *buff)
 {
     if (g_sample.bRunJoint)
@@ -101,11 +99,11 @@ void ai_inference_func(pipeline_buffer_t *buff)
 
         axdl_inference(g_sample.gModels, &tSrcFrame, &mResults);
 
-g_sample.osd_helper.Update(&mResults);
+        g_sample.osd_helper.Update(&mResults);
     }
 }
 
-int _mp4_frame_callback(const void *buff, int len, frame_type_e type, void *reserve)
+int _mp4_frame_callback(const void *buff, int len, void *reserve)
 {
     if (len == 0)
     {
@@ -118,6 +116,7 @@ int _mp4_frame_callback(const void *buff, int len, frame_type_e type, void *rese
     buf_h26x.p_vir = (void *)buff;
     buf_h26x.n_size = len;
     user_input((pipeline_t *)reserve, 1, &buf_h26x);
+    usleep(10 * 1000);
     return 0;
 }
 
@@ -134,7 +133,7 @@ static AX_VOID PrintHelp(char *testApp)
 {
     printf("Usage:%s -h for help\n\n", testApp);
     printf("\t-p: model config file path\n");
-    printf("\t-f: mp4 file(just only support h264 format)\n");
+    printf("\t-f: mp4 file/rtsp url(just only support h264 format)\n");
     printf("\t-l: loop play video\n");
     exit(0);
 }
@@ -149,7 +148,7 @@ int main(int argc, char *argv[])
     AX_S32 s32Ret = 0;
     int loopPlay = 1;
     COMMON_SYS_ARGS_T tCommonArgs = {0};
-    char h26xfile[512];
+    char video_url[512];
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, __sigExit);
     char config_file[256];
@@ -161,8 +160,8 @@ int main(int argc, char *argv[])
         switch (ch)
         {
         case 'f':
-            strcpy(h26xfile, optarg);
-            ALOGI("file input %s", h26xfile);
+            strcpy(video_url, optarg);
+            ALOGI("file input %s", video_url);
             break;
         case 'p':
         {
@@ -248,28 +247,29 @@ int main(int argc, char *argv[])
         pipeline_t &pipe0 = pipelines[0];
         {
             pipeline_ivps_config_t &config0 = pipe0.m_ivps_attr;
-            config0.n_ivps_grp = 0;    // 重复的会创建失败
-            config0.n_ivps_fps = 60;   // 屏幕只能是60gps
-            config0.n_ivps_rotate = 1; // 旋转
-            config0.n_ivps_width = 854;
-            config0.n_ivps_height = 480;
+            config0.n_ivps_grp = 0;                  // 重复的会创建失败
+            config0.n_ivps_fps = s_sample_framerate; // 屏幕只能是60gps
+            config0.n_ivps_width = 1920;
+            config0.n_ivps_height = 1080;
             config0.n_osd_rgn = 4; // osd rgn 的个数，一个rgn可以osd 32个目标
         }
         pipe0.enable = 1;
         pipe0.pipeid = 0x90015;
         pipe0.m_input_type = pi_vdec_h264;
-        pipe0.m_output_type = po_vo_sipeed_maix3_screen;
-        pipe0.n_loog_exit = 0;            // 可以用来控制线程退出（如果有的话）
-        pipe0.m_vdec_attr.n_vdec_grp = 0; // 可以重复
+        pipe0.m_output_type = po_rtsp_h264;
+        pipe0.n_loog_exit = 0;                                   // 可以用来控制线程退出（如果有的话）
+        pipe0.m_vdec_attr.n_vdec_grp = 0;                        // 可以重复
+        sprintf(pipe0.m_venc_attr.end_point, "%s", "axstream0"); // 重复的会创建失败
+        pipe0.m_venc_attr.n_venc_chn = 0;                        // 重复的会创建失败
 
         pipeline_t &pipe1 = pipelines[1];
         {
             pipeline_ivps_config_t &config1 = pipe1.m_ivps_attr;
             config1.n_ivps_grp = 1; // 重复的会创建失败
-            config1.n_ivps_fps = 60;
+            config1.n_ivps_fps = s_sample_framerate;
             config1.n_ivps_width = SAMPLE_IVPS_ALGO_WIDTH;
             config1.n_ivps_height = SAMPLE_IVPS_ALGO_HEIGHT;
-            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG)
+            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG && axdl_get_model_type(g_sample.gModels) != MT_SEG_DINOV2)
             {
                 config1.b_letterbox = 1;
             }
@@ -318,13 +318,13 @@ int main(int argc, char *argv[])
     }
 
     {
-
-        mp4_handle_t handle = mp4_open(h26xfile, _mp4_frame_callback, loopPlay, &pipelines[0]);
+        VideoDemux demux;
+        demux.Open(video_url, loopPlay, _mp4_frame_callback, &pipelines[0]);
         while (!gLoopExit)
         {
             usleep(1000 * 1000);
         }
-        mp4_close(&handle);
+        demux.Stop();
     }
 
     // 销毁pipeline
@@ -333,6 +333,15 @@ int main(int argc, char *argv[])
         if (g_sample.pipes_need_osd.size() && g_sample.bRunJoint)
         {
             g_sample.osd_helper.Stop();
+            //            pthread_cancel(g_sample.osd_tid);
+            // if (g_sample.osd_tid)
+            // {
+            //     s32Ret = pthread_join(g_sample.osd_tid, NULL);
+            //     if (s32Ret < 0)
+            //     {
+            //         ALOGE(" osd_tid exit failed,s32Ret:0x%x\n", s32Ret);
+            //     }
+            // }
         }
 
         for (size_t i = 0; i < pipe_count; i++)

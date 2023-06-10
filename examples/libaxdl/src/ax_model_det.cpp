@@ -60,7 +60,7 @@ int ax_model_yolov5_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
 {
     if (mSimpleRingBuffer.size() == 0)
     {
-        mSimpleRingBuffer.resize(MAX_MASK_OBJ_COUNT * SAMPLE_RINGBUFFER_CACHE_COUNT);
+        mSimpleRingBuffer.resize(SAMPLE_MAX_MASK_OBJ_COUNT * SAMPLE_RINGBUFFER_CACHE_COUNT);
     }
 
     std::vector<detection::Object> proposals;
@@ -96,7 +96,7 @@ int ax_model_yolov5_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
     static const int DEFAULT_MASK_SAMPLE_STRIDE = 4;
     auto &output = pOutputsInfo[seg_idx];
     auto ptr = (float *)output.pVirAddr;
-    detection::get_out_bbox_mask(proposals, objects, MAX_MASK_OBJ_COUNT, ptr, DEFAULT_MASK_PROTO_DIM, DEFAULT_MASK_SAMPLE_STRIDE, NMS_THRESHOLD,
+    detection::get_out_bbox_mask(proposals, objects, SAMPLE_MAX_MASK_OBJ_COUNT, ptr, DEFAULT_MASK_PROTO_DIM, DEFAULT_MASK_SAMPLE_STRIDE, NMS_THRESHOLD,
                                  get_algo_height(), get_algo_width(), HEIGHT_DET_BBOX_RESTORE, WIDTH_DET_BBOX_RESTORE);
 
     std::sort(objects.begin(), objects.end(),
@@ -816,8 +816,22 @@ void ax_model_yolopv2::draw_custom(int chn, axdl_results_t *results, float fonts
 {
     if (results->bYolopv2Mask && results->mYolopv2ll.data && results->mYolopv2seg.data)
     {
-        m_drawers[chn].add_mask(nullptr, &results->mYolopv2seg, {66, 0, 0, 128});
-        m_drawers[chn].add_mask(nullptr, &results->mYolopv2ll, {66, 0, 0, 128});
+        if (base_canvas.empty())
+        {
+            base_canvas = cv::Mat(results->mYolopv2seg.h, results->mYolopv2seg.w, CV_8UC4);
+        }
+        cv::Mat seg_mask(results->mYolopv2seg.h, results->mYolopv2seg.w, CV_8UC1, results->mYolopv2seg.data);
+        cv::Mat ll_mask(results->mYolopv2ll.h, results->mYolopv2ll.w, CV_8UC1, results->mYolopv2ll.data);
+        memset(base_canvas.data, 0, results->mYolopv2seg.h * results->mYolopv2seg.w * 4);
+        base_canvas.setTo(cv::Scalar(128, 0, 0, 128), seg_mask);
+        base_canvas.setTo(cv::Scalar(128, 0, 128, 0), ll_mask);
+        axdl_mat_t mask;
+        mask.data = base_canvas.data;
+        mask.w = base_canvas.cols;
+        mask.h = base_canvas.rows;
+        mask.s = base_canvas.step1();
+        mask.c = 4;
+        m_drawers[chn].add_mask(nullptr, &mask);
     }
     draw_bbox(chn, results, fontscale, thickness);
 }
@@ -1101,7 +1115,7 @@ int ax_model_yolov8_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
 {
     if (mSimpleRingBuffer.size() == 0)
     {
-        mSimpleRingBuffer.resize(MAX_MASK_OBJ_COUNT * SAMPLE_RINGBUFFER_CACHE_COUNT);
+        mSimpleRingBuffer.resize(SAMPLE_MAX_MASK_OBJ_COUNT * SAMPLE_RINGBUFFER_CACHE_COUNT);
     }
 
     std::vector<detection::Object> proposals;
@@ -1124,7 +1138,7 @@ int ax_model_yolov8_seg::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_
     static const int DEFAULT_MASK_SAMPLE_STRIDE = 4;
     auto &output = pOutputsInfo[9];
     auto ptr = (float *)output.pVirAddr;
-    detection::get_out_bbox_mask(proposals, objects, MAX_MASK_OBJ_COUNT, ptr, DEFAULT_MASK_PROTO_DIM, DEFAULT_MASK_SAMPLE_STRIDE, NMS_THRESHOLD,
+    detection::get_out_bbox_mask(proposals, objects, SAMPLE_MAX_MASK_OBJ_COUNT, ptr, DEFAULT_MASK_PROTO_DIM, DEFAULT_MASK_SAMPLE_STRIDE, NMS_THRESHOLD,
                                  get_algo_height(), get_algo_width(), HEIGHT_DET_BBOX_RESTORE, WIDTH_DET_BBOX_RESTORE);
 
     std::sort(objects.begin(), objects.end(),

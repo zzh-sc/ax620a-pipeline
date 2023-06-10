@@ -66,7 +66,7 @@ static struct _g_sample_
     void Deinit()
     {
         pipes_need_osd.clear();
-        
+
         ALOGN("g_sample Deinit\n");
     }
 } g_sample;
@@ -99,7 +99,7 @@ void ai_inference_func(pipeline_buffer_t *buff)
         tSrcFrame.nSize = buff->n_size;
 
         axdl_inference(g_sample.gModels, &tSrcFrame, &mResults);
-g_sample.osd_helper.Update(&mResults);
+        g_sample.osd_helper.Update(&mResults);
     }
 }
 FILE *h265_file_output = NULL;
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
             config.n_ivps_fps = 60;
             config.n_ivps_width = SAMPLE_IVPS_ALGO_WIDTH;
             config.n_ivps_height = SAMPLE_IVPS_ALGO_HEIGHT;
-            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG)
+            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG && axdl_get_model_type(g_sample.gModels) != MT_SEG_DINOV2)
             {
                 config.b_letterbox = 1;
             }
@@ -434,7 +434,7 @@ int main(int argc, char *argv[])
 
         if (g_sample.pipes_need_osd.size() && g_sample.bRunJoint)
         {
-            g_sample.osd_helper.Start(g_sample.gModels,g_sample.pipes_need_osd);
+            g_sample.osd_helper.Start(g_sample.gModels, g_sample.pipes_need_osd);
         }
     }
 

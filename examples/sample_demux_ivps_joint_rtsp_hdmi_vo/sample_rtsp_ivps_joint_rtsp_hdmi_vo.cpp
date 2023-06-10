@@ -25,8 +25,7 @@
 
 #include "../utilities/sample_log.h"
 
-#include "RTSPClient.h"
-
+#include "../common/video_demux.hpp"
 #include "ax_ivps_api.h"
 
 #include "fstream"
@@ -103,29 +102,13 @@ void ai_inference_func(pipeline_buffer_t *buff)
     }
 }
 
-static void frameHandlerFunc(void *arg, RTP_FRAME_TYPE frame_type, int64_t timestamp, unsigned char *buf, int len)
+static int frameHandlerFunc(const void *buf, int len, void *arg)
 {
     pipeline_t *pipe = (pipeline_t *)arg;
     pipeline_buffer_t buf_h264;
-
-    switch (frame_type)
-    {
-    case FRAME_TYPE_VIDEO:
-        buf_h264.p_vir = buf;
-        buf_h264.n_size = len;
-        user_input(pipe, 1, &buf_h264);
-        printf("\rbuf len : %d", len);
-        fflush(stdout);
-        break;
-    case FRAME_TYPE_AUDIO:
-        // printf("audio\n");
-        break;
-    case FRAME_TYPE_ETC:
-        // printf("etc\n");
-        break;
-    default:
-        break;
-    }
+    buf_h264.p_vir = (void *)buf;
+    buf_h264.n_size = len;
+    user_input(pipe, 1, &buf_h264);
 }
 
 // 允许外部调用
@@ -142,7 +125,7 @@ static AX_VOID PrintHelp(char *testApp)
     printf("Usage:%s -h for help\n\n", testApp);
     printf("\t-p: model config file path\n");
 
-    printf("\t-f: rtsp url\n");
+    printf("\t-f: mp4 file/rtsp url(just only support h264 format)\n");
 
     printf("\t-r: Sensor&Video Framerate (framerate need supported by sensor), default is 25\n");
 
@@ -158,7 +141,7 @@ int main(int argc, char *argv[])
     AX_S32 isExit = 0, i, ch;
     AX_S32 s32Ret = 0;
     COMMON_SYS_ARGS_T tCommonArgs = {0};
-    char rtsp_url[512];
+    char video_url[512];
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, __sigExit);
     char config_file[256];
@@ -170,8 +153,8 @@ int main(int argc, char *argv[])
         switch (ch)
         {
         case 'f':
-            strcpy(rtsp_url, optarg);
-            ALOGI("rtsp url : %s", rtsp_url);
+            strcpy(video_url, optarg);
+            ALOGI("video url : %s", video_url);
             break;
         case 'p':
         {
@@ -252,7 +235,7 @@ int main(int argc, char *argv[])
         pipeline_t &pipe0 = pipelines[0];
         {
             pipeline_ivps_config_t &config0 = pipe0.m_ivps_attr;
-            config0.n_ivps_grp = 0;  // 重复的会创建失败
+            config0.n_ivps_grp = 0;                  // 重复的会创建失败
             config0.n_ivps_fps = s_sample_framerate; // 屏幕只能是60gps
             // config0.n_ivps_rotate = 1; // 旋转
             config0.n_ivps_width = 1920;
@@ -282,7 +265,7 @@ int main(int argc, char *argv[])
             config1.n_ivps_fps = 60;
             config1.n_ivps_width = SAMPLE_IVPS_ALGO_WIDTH;
             config1.n_ivps_height = SAMPLE_IVPS_ALGO_HEIGHT;
-            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG)
+            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG && axdl_get_model_type(g_sample.gModels) != MT_SEG_DINOV2)
             {
                 config1.b_letterbox = 1;
             }
@@ -349,23 +332,31 @@ int main(int argc, char *argv[])
     }
 
     {
-        RTSPClient *rtspClient = new RTSPClient();
-        if (rtspClient->openURL(rtsp_url, 1, 2) == 0)
+        VideoDemux demux;
+        demux.Open(video_url, true, frameHandlerFunc, &pipelines[0]);
+        while (!gLoopExit)
         {
-            if (rtspClient->playURL(frameHandlerFunc, &pipelines[0], NULL, NULL) == 0)
-            {
-                while (!gLoopExit)
-                {
-                    usleep(1000 * 1000);
-                }
-            }
+            usleep(1000 * 1000);
         }
-        rtspClient->closeURL();
-        delete rtspClient;
-        gLoopExit = 1;
-        sleep(1);
-        pipeline_buffer_t end_buf = {0};
-        user_input(&pipelines[0], 1, &end_buf);
+        demux.Stop();
+
+        // RTSPClient *rtspClient = new RTSPClient();
+        // if (rtspClient->openURL(rtsp_url, 1, 2) == 0)
+        // {
+        //     if (rtspClient->playURL(frameHandlerFunc, &pipelines[0], NULL, NULL) == 0)
+        //     {
+        //         while (!gLoopExit)
+        //         {
+        //             usleep(1000 * 1000);
+        //         }
+        //     }
+        // }
+        // rtspClient->closeURL();
+        // delete rtspClient;
+        // gLoopExit = 1;
+        // sleep(1);
+        // pipeline_buffer_t end_buf = {0};
+        // user_input(&pipelines[0], 1, &end_buf);
     }
 
     // 销毁pipeline

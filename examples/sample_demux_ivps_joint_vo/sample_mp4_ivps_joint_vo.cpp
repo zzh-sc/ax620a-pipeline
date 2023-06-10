@@ -25,7 +25,7 @@
 
 #include "../utilities/sample_log.h"
 
-#include "RTSPClient.h"
+#include "../common/video_demux.hpp"
 
 #include "ax_ivps_api.h"
 
@@ -103,29 +103,20 @@ void ai_inference_func(pipeline_buffer_t *buff)
     }
 }
 
-static void frameHandlerFunc(void *arg, RTP_FRAME_TYPE frame_type, int64_t timestamp, unsigned char *buf, int len)
+int _mp4_frame_callback(const void *buff, int len, void *reserve)
 {
-    pipeline_t *pipe = (pipeline_t *)arg;
-    pipeline_buffer_t buf_h264;
-
-    switch (frame_type)
+    if (len == 0)
     {
-    case FRAME_TYPE_VIDEO:
-        buf_h264.p_vir = buf;
-        buf_h264.n_size = len;
-        user_input(pipe, 1, &buf_h264);
-        printf("\rbuf len : %d", len);
-        fflush(stdout);
-        break;
-    case FRAME_TYPE_AUDIO:
-        // printf("audio\n");
-        break;
-    case FRAME_TYPE_ETC:
-        // printf("etc\n");
-        break;
-    default:
-        break;
+        pipeline_buffer_t end_buf = {0};
+        user_input((pipeline_t *)reserve, 1, &end_buf);
+        ALOGN("mp4 file decode finish,quit the loop");
+        gLoopExit = 1;
     }
+    pipeline_buffer_t buf_h26x = {0};
+    buf_h26x.p_vir = (void *)buff;
+    buf_h26x.n_size = len;
+    user_input((pipeline_t *)reserve, 1, &buf_h26x);
+    return 0;
 }
 
 // 允许外部调用
@@ -141,11 +132,8 @@ static AX_VOID PrintHelp(char *testApp)
 {
     printf("Usage:%s -h for help\n\n", testApp);
     printf("\t-p: model config file path\n");
-
-    printf("\t-f: rtsp url\n");
-
-    printf("\t-r: Sensor&Video Framerate (framerate need supported by sensor), default is 25\n");
-
+    printf("\t-f: mp4 file/rtsp url(just only support h264 format)\n");
+    printf("\t-l: loop play video\n");
     exit(0);
 }
 
@@ -155,27 +143,33 @@ int main(int argc, char *argv[])
     gLoopExit = 0;
     g_sample.Init();
 
-    AX_S32 isExit = 0, i, ch;
+    AX_S32 isExit = 0, ch;
     AX_S32 s32Ret = 0;
+    int loopPlay = 1;
     COMMON_SYS_ARGS_T tCommonArgs = {0};
-    char rtsp_url[512];
+    char video_url[512];
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, __sigExit);
     char config_file[256];
 
     ALOGN("sample begin\n\n");
 
-    while ((ch = getopt(argc, argv, "p:f:r:h")) != -1)
+    while ((ch = getopt(argc, argv, "p:f:l:r:h")) != -1)
     {
         switch (ch)
         {
         case 'f':
-            strcpy(rtsp_url, optarg);
-            ALOGI("rtsp url : %s", rtsp_url);
+            strcpy(video_url, optarg);
+            ALOGI("file input %s", video_url);
             break;
         case 'p':
         {
             strcpy(config_file, optarg);
+            break;
+        }
+        case 'l':
+        {
+            loopPlay = atoi(optarg);
             break;
         }
         case 'r':
@@ -252,26 +246,17 @@ int main(int argc, char *argv[])
         pipeline_t &pipe0 = pipelines[0];
         {
             pipeline_ivps_config_t &config0 = pipe0.m_ivps_attr;
-            config0.n_ivps_grp = 0;  // 重复的会创建失败
-            config0.n_ivps_fps = s_sample_framerate; // 屏幕只能是60gps
-            // config0.n_ivps_rotate = 1; // 旋转
-            config0.n_ivps_width = 1920;
-            config0.n_ivps_height = 1080;
-            config0.n_fifo_count = 1;
+            config0.n_ivps_grp = 0;    // 重复的会创建失败
+            config0.n_ivps_fps = 60;   // 屏幕只能是60gps
+            config0.n_ivps_rotate = 1; // 旋转
+            config0.n_ivps_width = 854;
+            config0.n_ivps_height = 480;
             config0.n_osd_rgn = 4; // osd rgn 的个数，一个rgn可以osd 32个目标
-        }
-        {
-            pipeline_vo_config_t &config = pipe0.m_vo_attr;
-            config.hdmi.portid = 0;
-            config.hdmi.e_hdmi_type = phv_1920x1080p60;
-            config.hdmi.n_chn = 0;
-            config.hdmi.n_vo_count = 1;
-            config.hdmi.n_frame_rate = s_sample_framerate;
         }
         pipe0.enable = 1;
         pipe0.pipeid = 0x90015;
         pipe0.m_input_type = pi_vdec_h264;
-        pipe0.m_output_type = po_vo_hdmi;
+        pipe0.m_output_type = po_vo_sipeed_maix3_screen;
         pipe0.n_loog_exit = 0;            // 可以用来控制线程退出（如果有的话）
         pipe0.m_vdec_attr.n_vdec_grp = 0; // 可以重复
 
@@ -282,7 +267,7 @@ int main(int argc, char *argv[])
             config1.n_ivps_fps = 60;
             config1.n_ivps_width = SAMPLE_IVPS_ALGO_WIDTH;
             config1.n_ivps_height = SAMPLE_IVPS_ALGO_HEIGHT;
-            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG)
+            if (axdl_get_model_type(g_sample.gModels) != MT_SEG_PPHUMSEG && axdl_get_model_type(g_sample.gModels) != MT_SEG_DINOV2)
             {
                 config1.b_letterbox = 1;
             }
@@ -331,27 +316,18 @@ int main(int argc, char *argv[])
     }
 
     {
-        RTSPClient *rtspClient = new RTSPClient();
-        if (rtspClient->openURL(rtsp_url, 1, 2) == 0)
+        VideoDemux demux;
+        demux.Open(video_url, loopPlay, _mp4_frame_callback, &pipelines[0]);
+        while (!gLoopExit)
         {
-            if (rtspClient->playURL(frameHandlerFunc, &pipelines[0], NULL, NULL) == 0)
-            {
-                while (!gLoopExit)
-                {
-                    usleep(1000 * 1000);
-                }
-            }
+            usleep(1000 * 1000);
         }
-        rtspClient->closeURL();
-        delete rtspClient;
-        gLoopExit = 1;
-        sleep(1);
-        pipeline_buffer_t end_buf = {0};
-        user_input(&pipelines[0], 1, &end_buf);
+        demux.Stop();
     }
 
     // 销毁pipeline
     {
+        gLoopExit = 1;
         if (g_sample.pipes_need_osd.size() && g_sample.bRunJoint)
         {
             g_sample.osd_helper.Stop();
@@ -365,16 +341,10 @@ int main(int argc, char *argv[])
 
 EXIT_6:
 
-EXIT_5:
-
-EXIT_4:
-
-EXIT_3:
     axdl_deinit(&g_sample.gModels);
 
 EXIT_2:
 
-EXIT_1:
     COMMON_SYS_DeInit();
     g_sample.Deinit();
 
