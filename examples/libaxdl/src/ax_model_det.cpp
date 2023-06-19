@@ -1254,7 +1254,7 @@ int ax_model_yolov8_pose::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop
 {
     if (mSimpleRingBuffer.size() == 0)
     {
-        mSimpleRingBuffer.resize(SAMPLE_RINGBUFFER_CACHE_COUNT * SAMPLE_MAX_BBOX_COUNT);
+        mSimpleRingBuffer.resize(SAMPLE_RINGBUFFER_CACHE_COUNT * SAMPLE_MAX_BBOX_COUNT * SAMPLE_BODY_LMK_SIZE);
     }
 
     std::vector<detection::Object> proposals;
@@ -1300,13 +1300,14 @@ int ax_model_yolov8_pose::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop
             strcpy(results->mObjects[i].objname, "unknown");
         }
     }
+    return 0;
 }
 
 int ax_model_yolov8_pose_650::post_process(axdl_image_t *pstFrame, axdl_bbox_t *crop_resize_box, axdl_results_t *results)
 {
     if (mSimpleRingBuffer.size() == 0)
     {
-        mSimpleRingBuffer.resize(SAMPLE_RINGBUFFER_CACHE_COUNT * SAMPLE_MAX_BBOX_COUNT);
+        mSimpleRingBuffer.resize(SAMPLE_RINGBUFFER_CACHE_COUNT * SAMPLE_MAX_BBOX_COUNT * SAMPLE_BODY_LMK_SIZE);
     }
 
     std::vector<detection::Object> proposals;

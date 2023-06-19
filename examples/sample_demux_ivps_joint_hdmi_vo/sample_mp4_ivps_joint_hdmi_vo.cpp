@@ -121,7 +121,7 @@ void ai_inference_func(pipeline_buffer_t *buff)
     }
 }
 
-int _mp4_frame_callback(const void *buff, int len, void *reserve)
+void _demux_frame_callback(const void *buff, int len, void *reserve)
 {
     if (len == 0)
     {
@@ -134,8 +134,7 @@ int _mp4_frame_callback(const void *buff, int len, void *reserve)
     buf_h26x.p_vir = (void *)buff;
     buf_h26x.n_size = len;
     user_input((pipeline_t *)reserve, 1, &buf_h26x);
-    usleep(20 * 1000);
-    return 0;
+    usleep(5 * 1000);
 }
 
 // 允许外部调用
@@ -222,6 +221,10 @@ int main(int argc, char *argv[])
         PrintHelp(argv[0]);
         exit(0);
     }
+    if (config_files.size() == 0)
+    {
+        config_files.push_back("config/yolov7.json");
+    }
 
 #ifdef AXERA_TARGET_CHIP_AX620
     COMMON_SYS_POOL_CFG_T poolcfg[] = {
@@ -253,10 +256,6 @@ int main(int argc, char *argv[])
         goto EXIT_2;
     }
 #endif
-    if (config_files.size() == 0)
-    {
-        config_files.push_back("config/yolov7.json");
-    }
 
     vpipelines.resize(config_files.size());
 
@@ -379,28 +378,23 @@ int main(int argc, char *argv[])
 
     {
 
-        std::vector<VideoDemux *> video_handles;
+        VideoDemux *video_demux = new VideoDemux;
+        video_demux->Open(video_url, loopPlay, nullptr, nullptr);
         for (size_t i = 0; i < config_files.size(); i++)
         {
             auto &pipelines = vpipelines[i];
 
-            VideoDemux *handle = new VideoDemux; // mp4_open(h26xfile, _mp4_frame_callback, loopPlay, &pipelines[0]);
-            handle->Open(video_url, loopPlay, _mp4_frame_callback, &pipelines[0]);
-            video_handles.push_back(handle);
+            video_demux->AddCbs(_demux_frame_callback, &pipelines[0]);
+            // video_handles.push_back(handle);
         }
 
         while (!gLoopExit)
         {
             usleep(1000 * 1000);
         }
-        for (size_t i = 0; i < config_files.size(); i++)
-        {
-            auto handle = video_handles[i];
-            handle->Stop();
-            delete handle;
-            // mp4_close(&handle);
-        }
-        video_handles.clear();
+
+        video_demux->Stop();
+        delete video_demux;
 
         gLoopExit = 1;
         sleep(1);
