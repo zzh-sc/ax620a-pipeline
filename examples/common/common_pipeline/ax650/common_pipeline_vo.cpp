@@ -215,7 +215,7 @@ AX_POOL CreatePool(const AX_POOL_CONFIG_T &stPoolCfg)
     AX_POOL pool = AX_POOL_CreatePool((AX_POOL_CONFIG_T *)&stPoolCfg);
     if (AX_INVALID_POOLID == pool)
     {
-        ALOGE("%s: AX_POOL_CreatePool(blkSize %d, blkCnt %d, metaSize %d) fail", __func__, stPoolCfg.BlkSize, stPoolCfg.BlkCnt,
+        ALOGE("%s: AX_POOL_CreatePool(blkSize %lld, blkCnt %d, metaSize %lld) fail", __func__, stPoolCfg.BlkSize, stPoolCfg.BlkCnt,
               stPoolCfg.MetaSize);
         return AX_FALSE;
     }
@@ -288,7 +288,9 @@ AX_BOOL SetChnFrameRate(VO_CHN voChn, VO_LAYER voLayer,
     ALOGI("set layer %d voChn %d fps to %d", voLayer, voChn, nFps);
 #ifdef __DUMMY_VO__
 #else
-    AX_S32 ret = AX_VO_SetChnFrameRate(voLayer, voChn, nFps);
+    AX_FRAME_RATE_CTRL_U tmp{0};
+    tmp.nFrmRateCtrl = nFps;
+    AX_S32 ret = AX_VO_SetChnFrameRate(voLayer, voChn, tmp);
     if (0 != ret)
     {
         ALOGE("AX_VO_SetChnFrameRate(layer %d chn %d fps %d) fail, ret = 0x%x", voLayer, voChn, nFps, ret);
@@ -324,7 +326,7 @@ int _create_vo_hdmi(pipeline_t *pipe)
 
     gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voDev = pipe->m_vo_attr.hdmi.portid;
     pipeline_hdmi_vo_e _enIntfSync = pipe->m_vo_attr.hdmi.e_hdmi_type;
-    int nVideoCount = pipe->m_vo_attr.hdmi.n_vo_count;
+    unsigned nVideoCount = (unsigned)pipe->m_vo_attr.hdmi.n_vo_count;
     auto enIntfSync = cvt(_enIntfSync);
     if (!GetDispInfoFromIntfSync(enIntfSync, gHdmiAttr[pipe->m_vo_attr.hdmi.portid].stArea, gHdmiAttr[pipe->m_vo_attr.hdmi.portid].nHz))
     {
@@ -400,7 +402,7 @@ int _create_vo_hdmi(pipeline_t *pipe)
 
         /* if layer bind to dev, enSynMode is ignored */
         stLayerAttr.enSyncMode = AX_VO_LAYER_SYNC_NORMAL;
-        stLayerAttr.u32FrameRate = gHdmiAttr[pipe->m_vo_attr.hdmi.portid].nHz;
+        // stLayerAttr.uFrmRate.nFrmRateCtrl = gHdmiAttr[pipe->m_vo_attr.hdmi.portid].nHz;
         stLayerAttr.u32FifoDepth = gHdmiAttr[pipe->m_vo_attr.hdmi.portid].nPoolCnt;
         stLayerAttr.u32ChnNr = gHdmiAttr[pipe->m_vo_attr.hdmi.portid].m_arrChns.size();
         // stLayerAttr.u32BkClr = m_stAttr.nBgClr;
@@ -469,11 +471,11 @@ int _create_vo_hdmi(pipeline_t *pipe)
             }
 
             /* set default fps for all chns including logo and idle */
-            if (!SetChnFrameRate(voChn, gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voLayer, gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voDev, pipe->m_vo_attr.hdmi.n_frame_rate))
-            {
-                DisableChns(gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voLayer, voChn);
-                throw 1;
-            }
+            // if (!SetChnFrameRate(voChn, gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voLayer, gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voDev, pipe->m_vo_attr.hdmi.n_frame_rate))
+            // {
+            //     DisableChns(gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voLayer, voChn);
+            //     throw 1;
+            // }
 
             ret = AX_VO_EnableChn(gHdmiAttr[pipe->m_vo_attr.hdmi.portid].voLayer, voChn);
             if (0 != ret)

@@ -36,7 +36,7 @@ private:
         index++;
         if (index >= limit)
         {
-            printf("limit %d,%d,%d\n", index, vRgns.size(), limit);
+            ALOGD("limit %d,%d,%d", index, (int)vRgns.size(), limit);
             return false;
         }
         return true;
@@ -130,8 +130,9 @@ public:
     std::vector<AX_IVPS_RGN_DISP_GROUP_T> &get()
 #endif
     {
-        for (size_t i = 0; i < vRgns.size(); i++)
+        for (int i = 0; i < int(vRgns.size()); i++)
         {
+            vRgns[i].nNum = 0;
             vRgns[i].tChnAttr.nAlpha = 255;
             vRgns[i].tChnAttr.eFormat = AX_FORMAT_RGBA8888;
             vRgns[i].tChnAttr.nZindex = i;
@@ -338,7 +339,7 @@ public:
 
         auto mask_color = cv::Mat(rect.height, rect.width, CV_8UC4, mask_color_ptr.data);
 
-        cv::resize(mask_mat, mask_color, cv::Size(rect.width, rect.height));
+        cv::resize(mask_mat, mask_color, cv::Size(rect.width, rect.height), 0, 0, cv::InterpolationFlags::INTER_NEAREST);
 
         vRgns[get_cur_rgn_id()].arrDisp[get_cur_rgn_idx()].bShow = AX_TRUE;
         vRgns[get_cur_rgn_id()].arrDisp[get_cur_rgn_idx()].eType = AX_IVPS_RGN_TYPE_OSD;

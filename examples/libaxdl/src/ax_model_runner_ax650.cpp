@@ -1,6 +1,8 @@
 #ifdef AXERA_TARGET_CHIP_AX650
 #include "ax_model_runner_ax650.hpp"
 #include "string.h"
+#include <fcntl.h>
+#include <sys/mman.h>
 #include "utilities/file.hpp"
 #include <ax_sys_api.h>
 #include <ax_engine_api.h>
@@ -19,7 +21,7 @@ typedef enum
 
 typedef std::pair<AX_ENGINE_ALLOC_BUFFER_STRATEGY_T, AX_ENGINE_ALLOC_BUFFER_STRATEGY_T> INPUT_OUTPUT_ALLOC_STRATEGY;
 
-void free_io_index(AX_ENGINE_IO_BUFFER_T *io_buf, size_t index)
+void free_io_index(AX_ENGINE_IO_BUFFER_T *io_buf, int index)
 {
     for (int i = 0; i < index; ++i)
     {
@@ -51,7 +53,7 @@ static inline int prepare_io(AX_ENGINE_IO_INFO_T *info, AX_ENGINE_IO_T *io_data,
     io_data->nInputSize = info->nInputSize;
 
     auto ret = 0;
-    for (int i = 0; i < info->nInputSize; ++i)
+    for (uint i = 0; i < info->nInputSize; ++i)
     {
         auto meta = info->pInputs[i];
         auto buffer = &io_data->pInputs[i];
@@ -75,7 +77,7 @@ static inline int prepare_io(AX_ENGINE_IO_INFO_T *info, AX_ENGINE_IO_T *io_data,
 
     io_data->pOutputs = new AX_ENGINE_IO_BUFFER_T[info->nOutputSize];
     io_data->nOutputSize = info->nOutputSize;
-    for (int i = 0; i < info->nOutputSize; ++i)
+    for (uint i = 0; i < info->nOutputSize; ++i)
     {
         auto meta = info->pOutputs[i];
         auto buffer = &io_data->pOutputs[i];
@@ -130,21 +132,27 @@ int ax_runner_ax650::init(const char *model_file)
     }
 
     // 2. load model
-    std::vector<char> model_buffer;
-    if (!utilities::read_file(model_file, model_buffer))
+    auto *file_fp = fopen(model_file, "r");
+    if (!file_fp)
     {
-        fprintf(stderr, "Read Run-Joint model(%s) file failed.\n", model_file);
+        ALOGE("Read Run-Joint model(%s) file failed.\n", model_file);
         return -1;
     }
+    fseek(file_fp, 0, SEEK_END);
+    int model_size = ftell(file_fp);
+    fclose(file_fp);
+    int fd = open(model_file, O_RDWR, 0644);
+    void *mmap_add = mmap(NULL, model_size, PROT_WRITE, MAP_SHARED, fd, 0);
 
     // 3. create handle
 
-    ret = AX_ENGINE_CreateHandle(&m_handle->handle, model_buffer.data(), model_buffer.size());
+    ret = AX_ENGINE_CreateHandle(&m_handle->handle, mmap_add, model_size);
     if (0 != ret)
     {
         return ret;
     }
     fprintf(stdout, "Engine creating handle is done.\n");
+    munmap(mmap_add, model_size);
 
     // 4. create context
     ret = AX_ENGINE_CreateContext(m_handle->handle);
