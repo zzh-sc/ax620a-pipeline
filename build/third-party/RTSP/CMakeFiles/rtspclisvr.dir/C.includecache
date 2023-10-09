@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/RTSPClient/RTCP/rtcp_from_spec.c
+rtcp_from_spec.h
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/RTSPClient/RTCP/rtcp_from_spec.h
+
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/RTSPClient/RTCP/rtcp_from_spec.h
+stdlib.h
+-
+
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/Util/our_md5.c
+our_md5.h
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/Util/our_md5.h
+string.h
+-
+
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/Util/our_md5.h
+
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/Util/our_md5hl.c
+stdio.h
+-
+stdlib.h
+-
+our_md5.h
+/home/zzh/Desktop/ax-pipeline/third-party/RTSP/src/Util/our_md5.h
+

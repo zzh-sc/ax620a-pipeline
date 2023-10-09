@@ -1,0 +1,2 @@
+/opt/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ar qc libByteTrack.a  CMakeFiles/ByteTrack.dir/src/BYTETracker.cpp.o CMakeFiles/ByteTrack.dir/src/STrack.cpp.o CMakeFiles/ByteTrack.dir/src/bytetrack.cpp.o CMakeFiles/ByteTrack.dir/src/kalmanFilter.cpp.o CMakeFiles/ByteTrack.dir/src/lapjv.cpp.o CMakeFiles/ByteTrack.dir/src/utils.cpp.o
+/opt/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ranlib libByteTrack.a

@@ -1,0 +1,2 @@
+/opt/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ar qc libcommon_pipeline.a  CMakeFiles/common_pipeline.dir/ax620/common_pipeline.cpp.o CMakeFiles/common_pipeline.dir/ax620/common_pipeline_ivps.cpp.o CMakeFiles/common_pipeline.dir/ax620/common_pipeline_vdec.cpp.o CMakeFiles/common_pipeline.dir/ax620/common_pipeline_venc.cpp.o CMakeFiles/common_pipeline.dir/ax620/common_pipeline_vo.cpp.o
+/opt/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ranlib libcommon_pipeline.a

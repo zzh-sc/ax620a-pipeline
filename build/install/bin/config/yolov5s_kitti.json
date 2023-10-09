@@ -1,0 +1,34 @@
+{
+    "MODEL_TYPE": "MT_DET_YOLOV5",
+    "MODEL_PATH": "./models/yolov5s.joint",
+    "TRACK_ENABLE": true,
+    "STRIDES": [8, 16, 32],
+    "ANCHORS": [
+        10.0,
+        13.0,
+        16.0,
+        30.0,
+        33.0,
+        23.0,
+        30.0,
+        61.0,
+        62.0,
+        45.0,
+        59.0,
+        119.0,
+        116.0,
+        90.0,
+        156.0,
+        198.0,
+        373.0,
+        326.0
+    ],
+    "CLASS_NAMES": [
+        "car",
+        "pedestrian",
+        "cyclist"
+    ],
+    "CLASS_NUM": 3,
+    "NMS_THRESHOLD": 0.44999998807907104,
+    "PROB_THRESHOLD": 0.4000000059604645
+}

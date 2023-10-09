@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/Mp4Demuxer.cpp
+Mp4Demuxer.h
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/Mp4Demuxer.h
+minimp4/minimp4.h
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/minimp4/minimp4.h
+stdio.h
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/stdio.h
+stdlib.h
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/stdlib.h
+stdint.h
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/stdint.h
+thread
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/thread
+vector
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/vector
+string
+-
+
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/Mp4Demuxer.h
+
+/home/zzh/Desktop/ax-pipeline/third-party/mp4demux/minimp4/minimp4.h
+stdio.h
+-
+stdint.h
+-
+stdlib.h
+-
+string.h
+-
+limits.h
+-
+assert.h
+-
+

@@ -1,0 +1,1 @@
+/opt/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++  -O3 -DNDEBUG -Ofast -Wall -s -fPIC -Wno-unused-function -Wno-unused-label   CMakeFiles/rtsp_pusher.dir/RtspServer/example/rtsp_pusher.cpp.o  -o rtsp_pusher libRtspServer.a -lpthread 

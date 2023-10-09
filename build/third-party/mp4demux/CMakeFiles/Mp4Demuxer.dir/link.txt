@@ -1,0 +1,2 @@
+/opt/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ar qc libMp4Demuxer.a  CMakeFiles/Mp4Demuxer.dir/Mp4Demuxer.cpp.o
+/opt/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-ranlib libMp4Demuxer.a
